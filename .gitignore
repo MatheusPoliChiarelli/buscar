@@ -1,0 +1,20 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node / Next.js
+node_modules/
+.next/
+
+# Segredos
+.env
+.env.local
+*.env
+
+# Uploads locais
+uploads/
+
+# Sistema
+.DS_Store
+Thumbs.db
