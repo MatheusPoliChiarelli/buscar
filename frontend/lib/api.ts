@@ -72,3 +72,44 @@ export async function getVehicle(id: number): Promise<Vehicle> {
   }
   return response.json();
 }
+
+
+export type VehicleInput = {
+  dealership_id: number;
+  brand: string;
+  model: string;
+  version?: string;
+  year: number;
+  mileage: number;
+  price: number;
+  transmission?: string;
+  fuel?: string;
+  color?: string;
+  description?: string;
+};
+
+export async function createVehicle(data: VehicleInput): Promise<Vehicle> {
+  const response = await fetch(`${API_URL}/vehicles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao cadastrar veículo");
+  }
+  return response.json();
+}
+
+export async function uploadPhoto(vehicleId: number, file: File): Promise<Photo> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/vehicles/${vehicleId}/photos`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao enviar foto");
+  }
+  return response.json();
+}
