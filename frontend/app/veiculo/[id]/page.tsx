@@ -140,10 +140,6 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
             <p className="text-sm text-gray-500">{vehicle.dealership.city}</p>
 
             {whatsappLink && (
-              
-
-
-
                 <a
                 href={whatsappLink}
                 target="_blank"
