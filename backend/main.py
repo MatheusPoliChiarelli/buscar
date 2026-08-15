@@ -9,6 +9,7 @@ from database import get_db
 
 from models_db import Vehicle, Dealership, VehiclePhoto
 from schemas import VehicleCreate, VehicleOut, PhotoOut, VehicleUpdate
+from services.fipe_lookup import lookup_fipe_price
 
 app = FastAPI(title="BusCAR API")
 
@@ -82,6 +83,22 @@ def create_vehicle(data: VehicleCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Revenda não encontrada")
 
     vehicle = Vehicle(**data.model_dump())
+
+    fipe = lookup_fipe_price(
+        db=db,
+        brand=data.brand,
+        model=data.model,
+        year=data.year,
+        version=data.version,
+        transmission=data.transmission,
+        fuel=data.fuel,
+    )
+
+    if fipe:
+        vehicle.fipe_price = fipe["price"]
+        vehicle.fipe_reference = fipe["reference_month"]
+        vehicle.fipe_matched_model = fipe["matched_model"]
+
     db.add(vehicle)
     db.commit()
     db.refresh(vehicle)

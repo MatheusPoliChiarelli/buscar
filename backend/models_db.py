@@ -35,6 +35,11 @@ class Vehicle(Base):
     fuel = Column(String(30))
     color = Column(String(50))
     description = Column(Text)
+    fipe_price = Column(Float)
+    fipe_reference = Column(String(50))
+    fipe_matched_model = Column(String(255))
+    has_history_report = Column(Boolean, default=False)
+    is_inspected = Column(Boolean, default=False)
 
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -56,3 +61,34 @@ class VehiclePhoto(Base):
     position = Column(Integer, default=0)
 
     vehicle = relationship("Vehicle", back_populates="photos")
+
+
+class FipePrice(Base):
+    __tablename__ = "fipe_prices"
+
+    id = Column(Integer, primary_key=True)
+    brand = Column(String(100), nullable=False)
+    model = Column(String(255), nullable=False)
+    year = Column(Integer, nullable=False)
+    fuel = Column(String(50))
+    fipe_code = Column(String(20))
+    price = Column(Float, nullable=False)
+    reference_month = Column(String(50))
+
+    __table_args__ = (
+        Index("idx_fipe_lookup", "brand", "year"),
+    )
+
+
+class FipeImport(Base):
+    __tablename__ = "fipe_imports"
+
+    id = Column(Integer, primary_key=True)
+    brand = Column(String(100), nullable=False)
+    model = Column(String(255), nullable=False)
+    year = Column(Integer, nullable=False)
+    imported_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("idx_fipe_import", "brand", "model", "year", unique=True),
+    )

@@ -1,5 +1,6 @@
 'use client';
 
+import Header from '@/components/Header';
 import { useState, useEffect } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
@@ -33,14 +34,24 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
   }, [id]);
 
   if (loading) {
-    return <main className="min-h-screen p-8 text-gray-500">Carregando...</main>;
+    return (
+      <main className="min-h-screen bg-brand-50">
+        <Header />
+        <p className="max-w-5xl mx-auto px-4 py-8 text-stone-500">Carregando...</p>
+      </main>
+    );
   }
 
   if (error || !vehicle) {
     return (
-      <main className="min-h-screen p-8">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Link href="/" className="text-blue-600 hover:underline">Voltar para a busca</Link>
+      <main className="min-h-screen bg-brand-50">
+        <Header />
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Link href="/" className="text-brand-700 font-medium hover:underline">
+            Voltar para a busca
+          </Link>
+        </div>
       </main>
     );
   }
@@ -52,19 +63,13 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
     : null;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4">
-          <Link href="/" className="text-2xl font-bold">
-            Bus<span className="text-blue-600">CAR</span>
-          </Link>
-        </div>
-      </header>
+    <main className="min-h-screen bg-brand-50">
+      <Header />
 
       <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <div className="h-80 bg-gray-200">
+          <div className="bg-white rounded-xl border border-brand-200 overflow-hidden">
+            <div className="h-80 bg-stone-100">
               {vehicle.photos.length > 0 ? (
                 <img
                   src={photoUrl(vehicle.photos[selectedPhoto].url)}
@@ -72,7 +77,7 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <div className="w-full h-full flex items-center justify-center text-stone-400">
                   Sem foto disponível
                 </div>
               )}
@@ -84,8 +89,8 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
                   <button
                     key={photo.id}
                     onClick={() => setSelectedPhoto(index)}
-                    className={`h-16 w-24 shrink-0 rounded overflow-hidden border-2 ${
-                      index === selectedPhoto ? 'border-blue-600' : 'border-transparent'
+                    className={`h-16 w-24 shrink-0 rounded-lg overflow-hidden border-2 transition ${
+                      index === selectedPhoto ? 'border-brand-500' : 'border-transparent'
                     }`}
                   >
                     <img src={photoUrl(photo.url)} alt="" className="w-full h-full object-cover" />
@@ -96,48 +101,49 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
           </div>
 
           {vehicle.description && (
-            <div className="bg-white rounded-lg border p-5 mt-5">
-              <h2 className="font-semibold mb-2">Descrição</h2>
-              <p className="text-gray-700 whitespace-pre-line">{vehicle.description}</p>
+            <div className="bg-white rounded-xl border border-brand-200 p-5 mt-5">
+              <h2 className="font-semibold text-stone-900 mb-2">Descrição</h2>
+              <p className="text-stone-700 whitespace-pre-line">{vehicle.description}</p>
             </div>
           )}
         </div>
 
         <aside className="space-y-5">
-          <div className="bg-white rounded-lg border p-5">
-            <h1 className="text-xl font-bold">
+          <div className="bg-white rounded-xl border border-brand-200 p-5">
+            <h1 className="text-xl font-bold text-stone-900">
               {vehicle.brand} {vehicle.model}
             </h1>
-            <p className="text-gray-500">{vehicle.version || '—'}</p>
-            <p className="text-3xl font-bold text-blue-600 mt-3">{formatPrice(vehicle.price)}</p>
+            <p className="text-stone-500">{vehicle.version || '—'}</p>
+            <p className="text-3xl font-bold text-money-700 mt-3">{formatPrice(vehicle.price)}</p>
 
             <dl className="mt-5 space-y-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-500">Ano</dt>
-                <dd>{vehicle.year}</dd>
+                <dt className="text-stone-500">Ano</dt>
+                <dd className="text-stone-900">{vehicle.year}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Quilometragem</dt>
-                <dd>{vehicle.mileage.toLocaleString('pt-BR')} km</dd>
+                <dt className="text-stone-500">Quilometragem</dt>
+                <dd className="text-stone-900">{vehicle.mileage.toLocaleString('pt-BR')} km</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Câmbio</dt>
-                <dd>{vehicle.transmission || '—'}</dd>
+                <dt className="text-stone-500">Câmbio</dt>
+                <dd className="text-stone-900">{vehicle.transmission || '—'}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Combustível</dt>
-                <dd>{vehicle.fuel || '—'}</dd>
+                <dt className="text-stone-500">Combustível</dt>
+                <dd className="text-stone-900">{vehicle.fuel || '—'}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Cor</dt>
-                <dd>{vehicle.color || '—'}</dd>
+                <dt className="text-stone-500">Cor</dt>
+                <dd className="text-stone-900">{vehicle.color || '—'}</dd>
               </div>
             </dl>
           </div>
 
-          <div className="bg-white rounded-lg border p-5">
-            <h2 className="font-semibold">{vehicle.dealership.name}</h2>
-            <p className="text-sm text-gray-500">{vehicle.dealership.city}</p>
+          <div className="bg-white rounded-xl border border-brand-200 p-5">
+            <h2 className="font-semibold text-stone-900">{vehicle.dealership.name}</h2>
+            <p className="text-sm text-stone-500">{vehicle.dealership.city}</p>
+
 
             {whatsappLink && (
                 <a

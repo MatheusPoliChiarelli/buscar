@@ -1,4 +1,5 @@
 'use client';
+import Header from '@/components/Header';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -52,26 +53,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-brand-50">
-      <header className="bg-brand-600 text-white">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <svg
-              viewBox="0 -64 640 640"
-              className="h-10 w-auto shrink-0 animate-drive-in fill-stone-900"
-              aria-hidden="true"
-            >
-              <path d="M544 192h-16L419.22 56.02A64.025 64.025 0 0 0 369.24 32H155.33c-26.17 0-49.7 15.93-59.42 40.23L48 194.26C20.44 201.4 0 226.21 0 256v112c0 8.84 7.16 16 16 16h48c0 53.02 42.98 96 96 96s96-42.98 96-96h128c0 53.02 42.98 96 96 96s96-42.98 96-96h48c8.84 0 16-7.16 16-16v-80c0-53.02-42.98-96-96-96zM160 432c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48zm72-240H116.93l38.4-96H232v96zm48 0V96h89.24l76.8 96H280zm200 240c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48z" />
-            </svg>
-
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Bus<span className="text-stone-900">CAR</span>
-            </h1>
-          </div>
-
-          <span className="text-sm text-brand-100">Ribeirão Preto e região</span>
-        </div>
-      </header>
-
+      <Header />
       <section className="max-w-6xl mx-auto px-4 py-6">
         <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 flex flex-wrap gap-3">
           <input
@@ -122,7 +104,7 @@ export default function Home() {
               key={vehicle.id}
               href={`/veiculo/${vehicle.id}`}
               style={{ animationDelay: `${index * 60}ms` }}
-              className="animate-fade-up bg-white rounded-xl border border-brand-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              className="animate-fade-up bg-white rounded-xl border border-brand-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
             >
               <div className="h-44 bg-stone-100">
                 {vehicle.photos.length > 0 ? (
@@ -138,22 +120,38 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="p-4">
-                <p className="font-semibold text-stone-900">
-                  {vehicle.brand} {vehicle.model}
-                </p>
+              <div className="p-4 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold text-stone-900">
+                    {vehicle.brand} {vehicle.model}
+                  </p>
+
+                  {vehicle.fipe_price && (
+                    <span
+                      className={`shrink-0 text-[13px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md border ${
+                        vehicle.price <= vehicle.fipe_price
+                          ? 'border-money-600/30 text-money-700 bg-money-600/5'
+                          : 'border-brand-500/30 text-brand-700 bg-brand-500/5'
+                      }`}
+                    >
+                      FIPE {formatPrice(vehicle.fipe_price)}
+                    </span>
+                  )}
+                </div>
+
                 <p className="text-sm text-stone-500">
                   {vehicle.version || '—'} · {vehicle.year}
                 </p>
-                <p className="text-2xl font-bold text-brand-700 mt-2">
+                <p className="text-2xl font-bold text-money-700 mt-2">
                   {formatPrice(vehicle.price)}
                 </p>
                 <p className="text-sm text-stone-500 mt-1">
                   {formatMileage(vehicle.mileage)} · {vehicle.transmission || '—'}
                 </p>
-                <p className="text-xs text-stone-400 mt-3 pt-3 border-t border-stone-100">
-                  {vehicle.dealership.name}
-                </p>
+              </div>
+
+              <div className="bg-brand-600 px-4 py-2.5 rounded-b-xl">
+                <p className="text-xs font-medium text-white">{vehicle.dealership.name}</p>
               </div>
             </Link>
           ))}

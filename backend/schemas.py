@@ -48,6 +48,8 @@ class VehicleOut(BaseModel):
     created_at: datetime
     dealership: DealershipOut
     photos: list[PhotoOut]
+    fipe_price: float | None
+    fipe_reference: str | None
 
     model_config = ConfigDict(from_attributes=True)
 

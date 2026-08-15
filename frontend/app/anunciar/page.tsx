@@ -1,5 +1,6 @@
 'use client';
 
+import Header from '@/components/Header';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -69,13 +70,7 @@ export default function AnunciarPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <Link href="/" className="text-2xl font-bold">
-            Bus<span className="text-blue-600">CAR</span>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-5">Anunciar veículo</h1>

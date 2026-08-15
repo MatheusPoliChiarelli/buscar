@@ -28,6 +28,8 @@ export type Vehicle = {
   created_at: string;
   dealership: Dealership;
   photos: Photo[];
+  fipe_price: number | null;
+  fipe_reference: string | null;
 };
 
 export type VehicleFilters = {
@@ -86,6 +88,7 @@ export type VehicleInput = {
   fuel?: string;
   color?: string;
   description?: string;
+  
 };
 
 export async function createVehicle(data: VehicleInput): Promise<Vehicle> {
