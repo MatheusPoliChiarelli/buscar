@@ -15,6 +15,9 @@ class DealershipOut(BaseModel):
     name: str
     phone: str | None
     city: str
+    address: str | None
+    opening_hours: str | None
+    state: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,6 +57,8 @@ class VehicleOut(BaseModel):
     has_history_report: bool
     is_inspected: bool
     active: bool
+    has_history_report: bool
+    is_inspected: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -83,6 +88,8 @@ class DealershipRegister(BaseModel):
     phone: str | None = None
     city: str
     state: str = "SP"
+    address: str | None = None
+    opening_hours: str | None = None
 
 
 class DealershipLogin(BaseModel):
@@ -94,3 +101,12 @@ class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     dealership: DealershipOut
+
+
+class DealershipUpdate(BaseModel):
+    name: str | None = None
+    phone: str | None = None
+    city: str | None = None
+    state: str | None = None
+    address: str | None = None
+    opening_hours: str | None = None

@@ -15,6 +15,8 @@ import {
   type FipePriceResult,
 } from '@/lib/api';
 
+import { useAuth } from '@/lib/auth';
+
 function onlyDigits(value: string): string {
   return value.replace(/\D/g, '');
 }
@@ -61,6 +63,7 @@ export default function AnunciarPage() {
   const [error, setError] = useState('');
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [createdId, setCreatedId] = useState<number | null>(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     if (!form.brand) {
@@ -121,7 +124,7 @@ export default function AnunciarPage() {
     }
   }
 
-  async function handleSubmit() {
+async function handleSubmit() {
     setError('');
 
     if (!form.brand || !form.model || !form.year || !form.mileage || !form.price) {
@@ -129,10 +132,14 @@ export default function AnunciarPage() {
       return;
     }
 
+    if (!token) {
+      setError('Você precisa estar logado para anunciar.');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload: VehicleInput = {
-        dealership_id: 1,
         brand: form.brand,
         model: form.model,
         version: form.version || undefined,
@@ -147,10 +154,10 @@ export default function AnunciarPage() {
         is_inspected: form.is_inspected,
       };
 
-      const vehicle = await createVehicle(payload);
+      const vehicle = await createVehicle(payload, token);
 
       for (const file of files) {
-        await uploadPhoto(vehicle.id, file);
+        await uploadPhoto(vehicle.id, file, token);
       }
 
       setCreatedId(vehicle.id);
@@ -286,7 +293,7 @@ export default function AnunciarPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
               <div className="sm:col-span-2">
-                <label className={labelClass}>Marca *</label>
+                <label className={labelClass}>Marca </label>
                 <Combobox
                   placeholder="Selecione a marca"
                   value={form.brand}
@@ -296,7 +303,7 @@ export default function AnunciarPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass}>Modelo *</label>
+                <label className={labelClass}>Modelo </label>
                 <Combobox
                   placeholder="Selecione o modelo"
                   value={form.model}
@@ -318,7 +325,7 @@ export default function AnunciarPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass}>Ano *</label>
+                <label className={labelClass}>Ano </label>
                 <input
                   type="number"
                   className={inputClass}
@@ -339,7 +346,7 @@ export default function AnunciarPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass}>Quilometragem *</label>
+                <label className={labelClass}>Quilometragem </label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -442,7 +449,7 @@ export default function AnunciarPage() {
 
             <div className="flex flex-wrap items-end gap-4">
               <div className="flex-1 min-w-48">
-                <label className={labelClass}>Preço pedido *</label>
+                <label className={labelClass}>Preço pedido </label>
                 <input
                   type="text"
                   inputMode="numeric"

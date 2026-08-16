@@ -11,8 +11,38 @@ export type Dealership = {
   name: string;
   phone: string | null;
   city: string;
+  state?: string;
+  address?: string | null;
+  opening_hours?: string | null;
 };
 
+export async function getMe(token: string): Promise<Dealership> {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao carregar seus dados");
+  }
+  return response.json();
+}
+
+export async function updateMe(
+  data: Partial<Dealership>,
+  token: string
+): Promise<Dealership> {
+  const response = await fetch(`${API_URL}/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error("Não foi possível salvar seus dados");
+  }
+  return response.json();
+}
 export type Vehicle = {
   id: number;
   brand: string;
@@ -84,7 +114,6 @@ export async function getVehicle(id: number): Promise<Vehicle> {
 
 
 export type VehicleInput = {
-  dealership_id: number;
   brand: string;
   model: string;
   version?: string;
@@ -97,12 +126,16 @@ export type VehicleInput = {
   description?: string;
   has_history_report?: boolean;
   is_inspected?: boolean;
+  
 };
 
-export async function createVehicle(data: VehicleInput): Promise<Vehicle> {
+export async function createVehicle(data: VehicleInput, token: string): Promise<Vehicle> {
   const response = await fetch(`${API_URL}/vehicles`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -110,13 +143,13 @@ export async function createVehicle(data: VehicleInput): Promise<Vehicle> {
   }
   return response.json();
 }
-
-export async function uploadPhoto(vehicleId: number, file: File): Promise<Photo> {
+export async function uploadPhoto(vehicleId: number, file: File, token: string): Promise<Photo> {
   const formData = new FormData();
   formData.append("file", file);
 
   const response = await fetch(`${API_URL}/vehicles/${vehicleId}/photos`, {
     method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
   if (!response.ok) {
@@ -237,6 +270,8 @@ export async function register(data: {
   password: string;
   phone?: string;
   city: string;
+  address?: string;
+  opening_hours?: string;
 }): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -260,3 +295,41 @@ export async function listMyVehicles(token: string): Promise<Vehicle[]> {
   return response.json();
 }
 
+export async function updateVehicle(
+  id: number,
+  data: Partial<VehicleInput>,
+  token: string
+): Promise<Vehicle> {
+  const response = await fetch(`${API_URL}/vehicles/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao atualizar o anúncio");
+  }
+  return response.json();
+}
+
+export async function deleteVehicle(id: number, token: string): Promise<void> {
+  const response = await fetch(`${API_URL}/vehicles/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao remover o anúncio");
+  }
+}
+
+export async function deletePhoto(vehicleId: number, photoId: number, token: string): Promise<void> {
+  const response = await fetch(`${API_URL}/vehicles/${vehicleId}/photos/${photoId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao remover a foto");
+  }
+}

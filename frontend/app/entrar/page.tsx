@@ -6,7 +6,6 @@ import Header from '@/components/Header';
 import { login, register } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
-
 export default function EntrarPage() {
   const router = useRouter();
   const { signIn } = useAuth();
@@ -17,18 +16,39 @@ export default function EntrarPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('Ribeirão Preto');
+  const [address, setAddress] = useState('');
+  const [openingHours, setOpeningHours] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
     setError('');
+
+    if (mode === 'register' && (!name || !phone || !city || !address || !openingHours)) {
+      setError('Preencha todos os campos.');
+      return;
+    }
+
+    if (!email || !password) {
+      setError('Preencha e-mail e senha.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const result =
         mode === 'login'
           ? await login(email, password)
-          : await register({ name, email, password, phone: phone || undefined, city });
+          : await register({
+              name,
+              email,
+              password,
+              phone: phone || undefined,
+              city,
+              address: address || undefined,
+              opening_hours: openingHours || undefined,
+            });
 
       signIn(result.access_token, result.dealership);
       router.push('/meus-anuncios');
@@ -61,7 +81,7 @@ export default function EntrarPage() {
             {mode === 'register' && (
               <>
                 <div>
-                  <label className={labelClass}>Nome da revenda *</label>
+                  <label className={labelClass}>Nome da revenda </label>
                   <input
                     className={inputClass}
                     value={name}
@@ -81,18 +101,38 @@ export default function EntrarPage() {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Cidade *</label>
+                  <label className={labelClass}>Cidade </label>
                   <input
                     className={inputClass}
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                   />
                 </div>
+
+                <div>
+                  <label className={labelClass}>Endereço</label>
+                  <input
+                    className={inputClass}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Av. Independência, 1200"
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Horário de funcionamento</label>
+                  <input
+                    className={inputClass}
+                    value={openingHours}
+                    onChange={(e) => setOpeningHours(e.target.value)}
+                    placeholder="Seg a sex, 8h às 18h · Sáb, 8h às 12h"
+                  />
+                </div>
               </>
             )}
 
             <div>
-              <label className={labelClass}>E-mail *</label>
+              <label className={labelClass}>E-mail </label>
               <input
                 type="email"
                 className={inputClass}
@@ -103,7 +143,7 @@ export default function EntrarPage() {
             </div>
 
             <div>
-              <label className={labelClass}>Senha *</label>
+              <label className={labelClass}>Senha </label>
               <input
                 type="password"
                 className={inputClass}
@@ -135,7 +175,8 @@ export default function EntrarPage() {
             >
               {mode === 'login' ? (
                 <>
-                  Ainda não tem conta? <span className="font-medium text-brand-700">Cadastre sua revenda</span>
+                  Ainda não tem conta?{' '}
+                  <span className="font-medium text-brand-700">Cadastre sua revenda</span>
                 </>
               ) : (
                 <>

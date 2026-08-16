@@ -15,6 +15,8 @@ from services.auth import hash_password, verify_password, create_access_token
 from schemas import DealershipRegister, DealershipLogin, TokenOut
 from services.auth import decode_access_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from schemas import DealershipUpdate
+from schemas import DealershipRegister, DealershipLogin, TokenOut, DealershipUpdate, DealershipOut
 
 
 
@@ -366,6 +368,8 @@ def register(data: DealershipRegister, db: Session = Depends(get_db)):
         phone=data.phone,
         city=data.city,
         state=data.state,
+        address=data.address,
+        opening_hours=data.opening_hours,
         password_hash=hash_password(data.password),
     )
     db.add(dealership)
@@ -412,3 +416,22 @@ def my_vehicles(
         .order_by(Vehicle.created_at.desc())
         .all()
     )
+
+
+@app.get("/me", response_model=DealershipOut)
+def get_me(dealership: Dealership = Depends(get_current_dealership)):
+    return dealership
+
+
+@app.patch("/me", response_model=DealershipOut)
+def update_me(
+    data: DealershipUpdate,
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(dealership, field, value)
+
+    db.commit()
+    db.refresh(dealership)
+    return dealership

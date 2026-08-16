@@ -54,7 +54,7 @@ export default function Header() {
             <div ref={menuRef} className="relative">
               <button
                 onClick={() => setOpen(!open)}
-                className="h-9 w-9 rounded-full bg-white text-brand-700 font-bold text-sm flex items-center justify-center hover:bg-brand-50 transition"
+                className="h-9 w-9 rounded-full bg-white text-brand-700 font-bold text-sm flex items-center justify-center hover:bg-brand-500 hover:text-white transition"
                 aria-label="Menu da conta"
               >
                 {initials}
@@ -62,12 +62,16 @@ export default function Header() {
 
               {open && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg border border-brand-200 shadow-lg overflow-hidden z-30">
-                  <div className="px-4 py-3 border-b border-stone-100">
+                  <Link
+                    href="/minha-revenda"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-3 border-b border-stone-100 hover:bg-brand-50 transition"
+                  >
                     <p className="text-sm font-semibold text-stone-900 truncate">
                       {dealership.name}
                     </p>
-                    <p className="text-xs text-stone-500 truncate">{dealership.city}</p>
-                  </div>
+                    <p className="text-xs text-stone-500 truncate">Editar dados da revenda</p>
+                  </Link>
 
                   <Link
                     href="/meus-anuncios"
