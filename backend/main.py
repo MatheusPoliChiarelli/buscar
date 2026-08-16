@@ -10,6 +10,8 @@ from database import get_db
 from models_db import Vehicle, Dealership, VehiclePhoto
 from schemas import VehicleCreate, VehicleOut, PhotoOut, VehicleUpdate
 from services.fipe_lookup import lookup_fipe_price
+from services.fipe import get_brands, get_brand_years, get_year_models, get_brand_models, find_year_id, find_brand
+from services.fipe_lookup import lookup_fipe_price
 
 app = FastAPI(title="BusCAR API")
 
@@ -30,11 +32,11 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 def read_root():
     return {"status": "ok", "service": "BusCAR API"}
 
-
 @app.get("/vehicles", response_model=list[VehicleOut])
 def list_vehicles(
     brand: str | None = None,
     model: str | None = None,
+    version: str | None = None,
     min_year: int | None = None,
     max_year: int | None = None,
     min_price: float | None = None,
@@ -42,6 +44,8 @@ def list_vehicles(
     max_mileage: int | None = None,
     transmission: str | None = None,
     city: str | None = None,
+    has_history_report: bool | None = None,
+    is_inspected: bool | None = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(Vehicle).filter(Vehicle.active == True)
@@ -50,6 +54,8 @@ def list_vehicles(
         query = query.filter(Vehicle.brand.ilike(f"%{brand}%"))
     if model:
         query = query.filter(Vehicle.model.ilike(f"%{model}%"))
+    if version:
+        query = query.filter(Vehicle.version.ilike(f"%{version}%"))
     if min_year:
         query = query.filter(Vehicle.year >= min_year)
     if max_year:
@@ -64,8 +70,35 @@ def list_vehicles(
         query = query.filter(Vehicle.transmission == transmission)
     if city:
         query = query.join(Dealership).filter(Dealership.city.ilike(f"%{city}%"))
+    if has_history_report:
+        query = query.filter(Vehicle.has_history_report == True)
+    if is_inspected:
+        query = query.filter(Vehicle.is_inspected == True)
 
     return query.order_by(Vehicle.created_at.desc()).all()
+
+
+@app.get("/vehicles/facets")
+def vehicle_facets(db: Session = Depends(get_db)):
+    rows = db.query(Vehicle.brand, Vehicle.model, Vehicle.version).filter(Vehicle.active == True).all()
+
+    brands: dict[str, dict[str, set[str]]] = {}
+    for brand, model, version in rows:
+        models = brands.setdefault(brand, {})
+        versions = models.setdefault(model, set())
+        if version:
+            versions.add(version)
+
+    return [
+        {
+            "brand": brand,
+            "models": [
+                {"model": model, "versions": sorted(versions)}
+                for model, versions in sorted(models.items())
+            ],
+        }
+        for brand, models in sorted(brands.items())
+    ]
 
 
 @app.get("/vehicles/{vehicle_id}", response_model=VehicleOut)
@@ -182,3 +215,83 @@ def delete_photo(vehicle_id: int, photo_id: int, db: Session = Depends(get_db)):
     db.delete(photo)
     db.commit()
     return {"status": "ok", "message": "Foto removida"}
+
+
+@app.get("/fipe/brands")
+def fipe_brands():
+    try:
+        return get_brands()
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.get("/fipe/brands/{brand_id}/models")
+def fipe_models(brand_id: str, year: int, fuel: str | None = None):
+    try:
+        year_id = find_year_id(brand_id, year, fuel)
+        if not year_id:
+            return []
+
+        models = get_year_models(brand_id, year_id)
+
+        grouped: dict[str, list[str]] = {}
+        for m in models:
+            name = m["name"]
+            base = name.split()[0] if name else ""
+            grouped.setdefault(base, []).append(name)
+
+        return [
+            {"model": base, "versions": sorted(versions)}
+            for base, versions in sorted(grouped.items())
+        ]
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.get("/fipe/models")
+def fipe_models_by_brand(brand: str):
+    try:
+        found = find_brand(brand)
+        if not found:
+            return []
+
+        models = get_brand_models(found["code"])
+
+        grouped: dict[str, set[str]] = {}
+        for m in models:
+            name = m["name"]
+            if not name:
+                continue
+            base = name.split()[0]
+            grouped.setdefault(base, set()).add(name)
+
+        return [
+            {"model": base, "versions": sorted(versions)}
+            for base, versions in sorted(grouped.items())
+        ]
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+@app.get("/fipe/price")
+def fipe_price(
+    brand: str,
+    model: str,
+    year: int,
+    version: str | None = None,
+    transmission: str | None = None,
+    fuel: str | None = None,
+    db: Session = Depends(get_db),
+):
+    result = lookup_fipe_price(
+        db=db,
+        brand=brand,
+        model=model,
+        year=year,
+        version=version,
+        transmission=transmission,
+        fuel=fuel,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Não encontramos esse veículo na tabela FIPE.")
+    return result

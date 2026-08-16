@@ -18,7 +18,7 @@ export default function Header() {
           </span>
         </Link>
 
-        <span className="text-sm text-brand-100">Ribeirão Preto - SP</span>
+        <span className="text-lg text-brand-100">Ribeirão Preto - SP</span>
       </div>
     </header>
   );

@@ -52,3 +52,8 @@
 .animate-drive-in {
   animation: driveIn 1.8s cubic-bezier(0.12, 0.8, 0.15, 1) both;
 }
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}

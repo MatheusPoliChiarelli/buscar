@@ -57,6 +57,9 @@ def import_from_fipe(db: Session, brand_name: str, brand_id: str, model_search: 
         db.rollback()
 
     return total
+
+
+
 def lookup_fipe_price(
     db: Session,
     brand: str,
@@ -68,51 +71,61 @@ def lookup_fipe_price(
 ) -> dict | None:
     try:
         found_brand = find_brand(brand)
-        print("DEBUG marca encontrada:", found_brand)
         if not found_brand:
             return None
 
         brand_name = found_brand["name"]
         brand_id = found_brand["code"]
 
-        if not already_imported(db, brand_name, model, year):
-            imported = import_from_fipe(db, brand_name, brand_id, model, year, fuel)
-            print("DEBUG importados:", imported)
-            if imported == 0:
-                return None
-        else:
-            print("DEBUG ja importado antes")
+        result = _search(db, brand_name, brand_id, version, year, transmission, fuel) if version else None
 
-        candidates = db.query(FipePrice).filter(
-            FipePrice.brand == brand_name,
-            FipePrice.year == year,
-            FipePrice.model.ilike(f"%{model}%")
-        ).all()
+        if result:
+            result["fallback"] = False
+            return result
 
-        print("DEBUG candidatos no banco:", len(candidates))
-
-        if not candidates:
+        result = _search(db, brand_name, brand_id, model, year, transmission, fuel)
+        if not result:
             return None
 
-        if transmission == "automatico":
-            candidates = [c for c in candidates if is_automatic(c.model)] or candidates
-        elif transmission == "manual":
-            candidates = [c for c in candidates if not is_automatic(c.model)] or candidates
-
-        if version:
-            filtered = [c for c in candidates if version.lower() in c.model.lower()]
-            if filtered:
-                candidates = filtered
-
-        prices = [c.price for c in candidates]
-        average = sum(prices) / len(prices)
-
-        return {
-            "price": round(average, 2),
-            "exact": len(candidates) == 1,
-            "matched_model": candidates[0].model,
-            "reference_month": candidates[0].reference_month,
-        }
-    except ValueError as e:
-        print("DEBUG erro FIPE:", e)
+        result["fallback"] = bool(version)
+        return result
+    except ValueError:
         return None
+
+
+def _search(
+    db: Session,
+    brand_name: str,
+    brand_id: str,
+    term: str,
+    year: int,
+    transmission: str | None,
+    fuel: str | None,
+) -> dict | None:
+    if not already_imported(db, brand_name, term, year):
+        imported = import_from_fipe(db, brand_name, brand_id, term, year, fuel)
+        if imported == 0:
+            return None
+
+    candidates = db.query(FipePrice).filter(
+        FipePrice.brand == brand_name,
+        FipePrice.year == year,
+        FipePrice.model.ilike(f"%{term}%")
+    ).all()
+
+    if not candidates:
+        return None
+
+    if transmission == "automatico":
+        candidates = [c for c in candidates if is_automatic(c.model)] or candidates
+    elif transmission == "manual":
+        candidates = [c for c in candidates if not is_automatic(c.model)] or candidates
+
+    prices = [c.price for c in candidates]
+
+    return {
+        "price": round(sum(prices) / len(prices), 2),
+        "exact": len(candidates) == 1,
+        "matched_model": candidates[0].model,
+        "reference_month": candidates[0].reference_month,
+    }

@@ -31,6 +31,8 @@ class VehicleCreate(BaseModel):
     fuel: str | None = None
     color: str | None = None
     description: str | None = None
+    has_history_report: bool = False
+    is_inspected: bool = False
 
 
 class VehicleOut(BaseModel):
@@ -50,6 +52,8 @@ class VehicleOut(BaseModel):
     photos: list[PhotoOut]
     fipe_price: float | None
     fipe_reference: str | None
+    has_history_report: bool
+    is_inspected: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -67,3 +71,5 @@ class VehicleUpdate(BaseModel):
     color: str | None = None
     description: str | None = None
     active: bool | None = None
+    has_history_report: bool | None = None
+    is_inspected: bool | None = None

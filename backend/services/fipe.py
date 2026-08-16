@@ -83,4 +83,6 @@ def find_year_id(brand_id: str, year: int, fuel: str | None = None) -> str | Non
 
     return candidates[0]["code"]
 
-print("DEBUG token:", FIPE_TOKEN)
+@lru_cache(maxsize=128)
+def get_brand_models(brand_id: str):
+    return fipe_get(f"{FIPE_BASE}/brands/{brand_id}/models")

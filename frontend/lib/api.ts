@@ -30,11 +30,14 @@ export type Vehicle = {
   photos: Photo[];
   fipe_price: number | null;
   fipe_reference: string | null;
+  has_history_report: boolean;
+  is_inspected: boolean;
 };
 
 export type VehicleFilters = {
   brand?: string;
   model?: string;
+  version?: string;
   min_year?: number;
   max_year?: number;
   min_price?: number;
@@ -42,6 +45,8 @@ export type VehicleFilters = {
   max_mileage?: number;
   transmission?: string;
   city?: string;
+  has_history_report?: boolean;
+  is_inspected?: boolean;
 };
 
 export function photoUrl(path: string): string {
@@ -51,10 +56,11 @@ export function photoUrl(path: string): string {
 export async function listVehicles(filters: VehicleFilters = {}): Promise<Vehicle[]> {
   const params = new URLSearchParams();
 
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== "" && value !== null) {
-      params.append(key, String(value));
+Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "" || value === false) {
+      return;
     }
+    params.append(key, String(value));
   });
 
   const query = params.toString();
@@ -88,7 +94,8 @@ export type VehicleInput = {
   fuel?: string;
   color?: string;
   description?: string;
-  
+  has_history_report?: boolean;
+  is_inspected?: boolean;
 };
 
 export async function createVehicle(data: VehicleInput): Promise<Vehicle> {
@@ -116,3 +123,91 @@ export async function uploadPhoto(vehicleId: number, file: File): Promise<Photo>
   }
   return response.json();
 }
+
+export type FipeBrand = {
+  code: string;
+  name: string;
+};
+
+export type FipeModelGroup = {
+  model: string;
+  versions: string[];
+};
+
+export async function listFipeBrands(): Promise<FipeBrand[]> {
+  const response = await fetch(`${API_URL}/fipe/brands`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar marcas");
+  }
+  return response.json();
+}
+
+export async function listFipeModels(brandId: string, year: number, fuel?: string): Promise<FipeModelGroup[]> {
+  const params = new URLSearchParams({ year: String(year) });
+  if (fuel) {
+    params.append("fuel", fuel);
+  }
+
+  const response = await fetch(`${API_URL}/fipe/brands/${brandId}/models?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar modelos");
+  }
+  return response.json();
+}
+
+
+export type VehicleFacet = {
+  brand: string;
+  models: { model: string; versions: string[] }[];
+};
+
+export async function listFacets(): Promise<VehicleFacet[]> {
+  const response = await fetch(`${API_URL}/vehicles/facets`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar opções");
+  }
+  return response.json();
+}
+
+export async function listModelsByBrand(brand: string): Promise<FipeModelGroup[]> {
+  const response = await fetch(`${API_URL}/fipe/models?brand=${encodeURIComponent(brand)}`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar modelos");
+  }
+  return response.json();
+}
+
+export type FipePriceResult = {
+  price: number;
+  exact: boolean;
+  matched_model: string;
+  reference_month: string | null;
+  fallback: boolean;
+};
+
+
+export async function fetchFipePrice(input: {
+  brand: string;
+  model: string;
+  year: number;
+  version?: string;
+  transmission?: string;
+  fuel?: string;
+}): Promise<FipePriceResult> {
+  const params = new URLSearchParams({
+    brand: input.brand,
+    model: input.model,
+    year: String(input.year),
+  });
+  if (input.version) params.append("version", input.version);
+  if (input.transmission) params.append("transmission", input.transmission);
+  if (input.fuel) params.append("fuel", input.fuel);
+
+  const response = await fetch(`${API_URL}/fipe/price?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Não encontramos esse veículo na tabela FIPE.");
+  }
+  return response.json();
+}
+
+
