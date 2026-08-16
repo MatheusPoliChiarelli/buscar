@@ -53,6 +53,7 @@ class VehicleOut(BaseModel):
     fipe_reference: str | None
     has_history_report: bool
     is_inspected: bool
+    active: bool
 
     model_config = ConfigDict(from_attributes=True)
 

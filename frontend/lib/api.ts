@@ -32,6 +32,7 @@ export type Vehicle = {
   fipe_reference: string | null;
   has_history_report: boolean;
   is_inspected: boolean;
+  active?: boolean;
 };
 
 export type VehicleFilters = {
@@ -210,4 +211,52 @@ export async function fetchFipePrice(input: {
   return response.json();
 }
 
+
+export type AuthResponse = {
+  access_token: string;
+  token_type: string;
+  dealership: Dealership;
+};
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail || "Não foi possível entrar.");
+  }
+  return response.json();
+}
+
+export async function register(data: {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  city: string;
+}): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "Não foi possível criar a conta.");
+  }
+  return response.json();
+}
+
+export async function listMyVehicles(token: string): Promise<Vehicle[]> {
+  const response = await fetch(`${API_URL}/my-vehicles`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("Erro ao carregar seus anúncios");
+  }
+  return response.json();
+}
 
