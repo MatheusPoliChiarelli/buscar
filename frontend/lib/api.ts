@@ -13,8 +13,13 @@ export type Dealership = {
   city: string;
   state?: string;
   address?: string | null;
+  neighborhood?: string | null;
+  zip_code?: string | null;
   opening_hours?: string | null;
+  logo_url?: string | null;
+  address_number?: string | null;
 };
+
 
 export async function getMe(token: string): Promise<Dealership> {
   const response = await fetch(`${API_URL}/me`, {
@@ -271,6 +276,9 @@ export async function register(data: {
   phone?: string;
   city: string;
   address?: string;
+  address_number?: string;
+  neighborhood?: string;
+  zip_code?: string;
   opening_hours?: string;
 }): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
@@ -332,4 +340,45 @@ export async function deletePhoto(vehicleId: number, photoId: number, token: str
   if (!response.ok) {
     throw new Error("Erro ao remover a foto");
   }
+}
+
+export async function getDealership(id: number): Promise<Dealership> {
+  const response = await fetch(`${API_URL}/dealerships/${id}`);
+  if (!response.ok) {
+    throw new Error("Revenda não encontrada");
+  }
+  return response.json();
+}
+
+export async function listDealershipVehicles(id: number): Promise<Vehicle[]> {
+  const response = await fetch(`${API_URL}/dealerships/${id}/vehicles`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar os anúncios");
+  }
+  return response.json();
+}
+
+export type DealershipWithCount = Dealership & { vehicle_count: number };
+
+export async function listDealerships(): Promise<DealershipWithCount[]> {
+  const response = await fetch(`${API_URL}/dealerships`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar as revendas");
+  }
+  return response.json();
+}
+
+export async function uploadLogo(file: File, token: string): Promise<Dealership> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/me/logo`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!response.ok) {
+    throw new Error("Não foi possível enviar a logo");
+  }
+  return response.json();
 }

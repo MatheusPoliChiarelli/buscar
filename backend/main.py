@@ -17,7 +17,7 @@ from services.auth import decode_access_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from schemas import DealershipUpdate
 from schemas import DealershipRegister, DealershipLogin, TokenOut, DealershipUpdate, DealershipOut
-
+from sqlalchemy import func
 
 
 
@@ -273,6 +273,26 @@ def update_vehicle(
     return vehicle
 
 
+@app.get("/dealerships/{dealership_id}", response_model=DealershipOut)
+def get_dealership(dealership_id: int, db: Session = Depends(get_db)):
+    dealership = db.query(Dealership).filter(
+        Dealership.id == dealership_id,
+        Dealership.active == True
+    ).first()
+    if not dealership:
+        raise HTTPException(status_code=404, detail="Revenda não encontrada")
+    return dealership
+
+
+@app.get("/dealerships/{dealership_id}/vehicles", response_model=list[VehicleOut])
+def dealership_vehicles(dealership_id: int, db: Session = Depends(get_db)):
+    return (
+        db.query(Vehicle)
+        .filter(Vehicle.dealership_id == dealership_id, Vehicle.active == True)
+        .order_by(Vehicle.created_at.desc())
+        .all()
+    )
+
 @app.get("/fipe/brands")
 def fipe_brands():
     try:
@@ -369,9 +389,13 @@ def register(data: DealershipRegister, db: Session = Depends(get_db)):
         city=data.city,
         state=data.state,
         address=data.address,
+        address_number=data.address_number,
+        neighborhood=data.neighborhood,
+        zip_code=data.zip_code,
         opening_hours=data.opening_hours,
         password_hash=hash_password(data.password),
     )
+
     db.add(dealership)
     db.commit()
     db.refresh(dealership)
@@ -432,6 +456,63 @@ def update_me(
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(dealership, field, value)
 
+    db.commit()
+    db.refresh(dealership)
+    return dealership
+
+
+@app.get("/dealerships")
+def list_dealerships(db: Session = Depends(get_db)):
+    rows = (
+        db.query(
+            Dealership,
+            func.count(Vehicle.id).label("vehicle_count"),
+        )
+        .outerjoin(Vehicle, (Vehicle.dealership_id == Dealership.id) & (Vehicle.active == True))
+        .filter(Dealership.active == True)
+        .group_by(Dealership.id)
+        .order_by(Dealership.name)
+        .all()
+    )
+
+    return [
+        {
+            "id": d.id,
+            "name": d.name,
+            "phone": d.phone,
+            "city": d.city,
+            "state": d.state,
+            "address": d.address,
+            "opening_hours": d.opening_hours,
+            "vehicle_count": count,
+        }
+        for d, count in rows
+    ]
+
+
+@app.post("/me/logo", response_model=DealershipOut)
+async def upload_logo(
+    file: UploadFile = File(...),
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    extension = Path(file.filename).suffix.lower()
+    if extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Formato não permitido. Use JPG, PNG ou WEBP.")
+
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo muito grande. Máximo 5 MB.")
+
+    if dealership.logo_url:
+        old = UPLOAD_DIR / Path(dealership.logo_url).name
+        if old.exists():
+            old.unlink()
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+    (UPLOAD_DIR / filename).write_bytes(content)
+
+    dealership.logo_url = f"/uploads/{filename}"
     db.commit()
     db.refresh(dealership)
     return dealership

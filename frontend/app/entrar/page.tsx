@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import AddressFields, { type AddressValue } from '@/components/AddressFields';
 import { login, register } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { formatPhone } from '@/lib/cep';
 
 export default function EntrarPage() {
   const router = useRouter();
@@ -15,22 +17,37 @@ export default function EntrarPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('Ribeirão Preto');
-  const [address, setAddress] = useState('');
   const [openingHours, setOpeningHours] = useState('');
+  const [address, setAddress] = useState<AddressValue>({
+    zipCode: '',
+    address: '',
+    number: '',
+    neighborhood: '',
+    city: '',
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
     setError('');
 
-    if (mode === 'register' && (!name || !phone || !city || !address || !openingHours)) {
-      setError('Preencha todos os campos.');
+    if (!email || !password) {
+      setError('Preencha e-mail e senha.');
       return;
     }
 
-    if (!email || !password) {
-      setError('Preencha e-mail e senha.');
+    if (
+      mode === 'register' &&
+      (!name ||
+        !phone ||
+        !address.zipCode ||
+        !address.address ||
+        !address.number ||
+        !address.neighborhood ||
+        !address.city ||
+        !openingHours)
+    ) {
+      setError('Preencha todos os campos.');
       return;
     }
 
@@ -44,10 +61,13 @@ export default function EntrarPage() {
               name,
               email,
               password,
-              phone: phone || undefined,
-              city,
-              address: address || undefined,
-              opening_hours: openingHours || undefined,
+              phone,
+              city: address.city,
+              address: address.address,
+              address_number: address.number,
+              neighborhood: address.neighborhood,
+              zip_code: address.zipCode,
+              opening_hours: openingHours,
             });
 
       signIn(result.access_token, result.dealership);
@@ -66,7 +86,9 @@ export default function EntrarPage() {
     <main className="min-h-screen bg-brand-50">
       <Header />
 
-      <div className="max-w-md mx-auto px-4 py-12">
+      <div
+        className={`${mode === 'register' ? 'max-w-3xl' : 'max-w-md'} mx-auto px-4 py-12 transition-all`}
+      >
         <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-8">
           <h1 className="text-2xl font-bold text-stone-900">
             {mode === 'login' ? 'Entrar' : 'Criar conta'}
@@ -77,11 +99,11 @@ export default function EntrarPage() {
               : 'Cadastre sua revenda e comece a anunciar em Ribeirão Preto e região.'}
           </p>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-6 gap-4">
             {mode === 'register' && (
               <>
-                <div>
-                  <label className={labelClass}>Nome da revenda </label>
+                <div className="sm:col-span-4">
+                  <label className={labelClass}>Nome da revenda</label>
                   <input
                     className={inputClass}
                     value={name}
@@ -90,36 +112,20 @@ export default function EntrarPage() {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className={labelClass}>WhatsApp</label>
                   <input
                     className={inputClass}
+                    inputMode="numeric"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="16 99999-8888"
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
+                    placeholder="(16) 99999-8888"
                   />
                 </div>
 
-                <div>
-                  <label className={labelClass}>Cidade </label>
-                  <input
-                    className={inputClass}
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
-                </div>
+                <AddressFields value={address} onChange={setAddress} />
 
-                <div>
-                  <label className={labelClass}>Endereço</label>
-                  <input
-                    className={inputClass}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Av. Independência, 1200"
-                  />
-                </div>
-
-                <div>
+                <div className="sm:col-span-6">
                   <label className={labelClass}>Horário de funcionamento</label>
                   <input
                     className={inputClass}
@@ -131,8 +137,8 @@ export default function EntrarPage() {
               </>
             )}
 
-            <div>
-              <label className={labelClass}>E-mail </label>
+            <div className={mode === 'register' ? 'sm:col-span-3' : 'sm:col-span-6'}>
+              <label className={labelClass}>E-mail</label>
               <input
                 type="email"
                 className={inputClass}
@@ -142,8 +148,8 @@ export default function EntrarPage() {
               />
             </div>
 
-            <div>
-              <label className={labelClass}>Senha </label>
+            <div className={mode === 'register' ? 'sm:col-span-3' : 'sm:col-span-6'}>
+              <label className={labelClass}>Senha</label>
               <input
                 type="password"
                 className={inputClass}
@@ -154,12 +160,12 @@ export default function EntrarPage() {
               />
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="sm:col-span-6 text-sm text-red-600">{error}</p>}
 
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg shadow-sm hover:bg-brand-700 hover:shadow-md transition-all disabled:opacity-50"
+              className="sm:col-span-6 w-full bg-brand-600 text-white font-semibold py-3 rounded-lg shadow-sm hover:bg-brand-700 hover:shadow-md transition-all disabled:opacity-50"
             >
               {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
             </button>

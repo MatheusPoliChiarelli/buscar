@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { dealership, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -30,25 +31,41 @@ export default function Header() {
         .toUpperCase()
     : '';
 
+  const navClass = (isActive: boolean) =>
+    `px-4 py-2 rounded-lg text-sm font-medium transition ${
+      isActive ? 'bg-white text-brand-700' : 'text-brand-100 hover:bg-white/15 hover:text-white'
+    }`;
+
   return (
     <header className="bg-brand-600 text-white">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
-          <svg
-            viewBox="0 -64 640 640"
-            className="h-10 w-auto shrink-0 animate-drive-in fill-stone-900"
-            aria-hidden="true"
-          >
-            <path d="M544 192h-16L419.22 56.02A64.025 64.025 0 0 0 369.24 32H155.33c-26.17 0-49.7 15.93-59.42 40.23L48 194.26C20.44 201.4 0 226.21 0 256v112c0 8.84 7.16 16 16 16h48c0 53.02 42.98 96 96 96s96-42.98 96-96h128c0 53.02 42.98 96 96 96s96-42.98 96-96h48c8.84 0 16-7.16 16-16v-80c0-53.02-42.98-96-96-96zM160 432c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48zm72-240H116.93l38.4-96H232v96zm48 0V96h89.24l76.8 96H280zm200 240c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48z" />
-          </svg>
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2.5 cursor-pointer shrink-0">
+            <svg
+              viewBox="0 -64 640 640"
+              className="h-10 w-auto shrink-0 animate-drive-in fill-stone-900"
+              aria-hidden="true"
+            >
+              <path d="M544 192h-16L419.22 56.02A64.025 64.025 0 0 0 369.24 32H155.33c-26.17 0-49.7 15.93-59.42 40.23L48 194.26C20.44 201.4 0 226.21 0 256v112c0 8.84 7.16 16 16 16h48c0 53.02 42.98 96 96 96s96-42.98 96-96h128c0 53.02 42.98 96 96 96s96-42.98 96-96h48c8.84 0 16-7.16 16-16v-80c0-53.02-42.98-96-96-96zM160 432c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48zm72-240H116.93l38.4-96H232v96zm48 0V96h89.24l76.8 96H280zm200 240c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48z" />
+            </svg>
 
-          <span className="text-2xl font-bold tracking-tight text-white">
-            Bus<span className="text-stone-900">CAR</span>
-          </span>
-        </Link>
+            <span className="text-2xl font-bold tracking-tight text-white">
+              Bus<span className="text-stone-900">CAR</span>
+            </span>
+          </Link>
+
+          <nav className="hidden sm:flex items-center gap-1">
+            <Link href="/" className={navClass(pathname === '/')}>
+              Carros
+            </Link>
+            <Link href="/revendas" className={navClass(pathname.startsWith('/revendas'))}>
+              Revendas
+            </Link>
+          </nav>
+        </div>
 
         <div className="flex items-center gap-5">
-          <span className="hidden sm:block text-lg text-brand-100">Ribeirão Preto - SP</span>
+          <span className="hidden lg:block text-lg text-brand-100">Ribeirão Preto - SP</span>
 
           {dealership ? (
             <div ref={menuRef} className="relative">

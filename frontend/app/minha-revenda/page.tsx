@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { getMe, updateMe } from '@/lib/api';
+import DealershipAvatar from '@/components/DealershipAvatar';
+import AddressFields, { type AddressValue } from '@/components/AddressFields';
+import { getMe, updateMe, uploadLogo } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { formatPhone } from '@/lib/cep';
 
 export default function MinhaRevendaPage() {
   const router = useRouter();
@@ -13,12 +16,19 @@ export default function MinhaRevendaPage() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('');
-  const [address, setAddress] = useState('');
   const [openingHours, setOpeningHours] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [address, setAddress] = useState<AddressValue>({
+    zipCode: '',
+    address: '',
+    number: '',
+    neighborhood: '',
+    city: '',
+  });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,19 +42,51 @@ export default function MinhaRevendaPage() {
     getMe(token)
       .then((data) => {
         setName(data.name);
-        setPhone(data.phone || '');
-        setCity(data.city);
-        setAddress(data.address || '');
+        setPhone(formatPhone(data.phone || ''));
         setOpeningHours(data.opening_hours || '');
+        setLogoUrl(data.logo_url || null);
+        setAddress({
+          zipCode: data.zip_code || '',
+          address: data.address || '',
+          number: data.address_number || '',
+          neighborhood: data.neighborhood || '',
+          city: data.city || '',
+        });
       })
       .catch(() => setError('Não foi possível carregar seus dados.'))
       .finally(() => setLoading(false));
   }, [token, authLoading, router]);
 
+  async function handleLogoChange(file: File | undefined) {
+    if (!file || !token) return;
+    setUploadingLogo(true);
+    setError('');
+
+    try {
+      const updated = await uploadLogo(file, token);
+      setLogoUrl(updated.logo_url || null);
+      signIn(token, updated);
+    } catch (e) {
+      setError('Não foi possível enviar a logo.');
+      console.error(e);
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
   async function handleSave() {
     if (!token) return;
 
-    if (!name || !phone || !city || !address || !openingHours) {
+    if (
+      !name ||
+      !phone ||
+      !address.zipCode ||
+      !address.address ||
+      !address.number ||
+      !address.neighborhood ||
+      !address.city ||
+      !openingHours
+    ) {
       setError('Preencha todos os campos.');
       return;
     }
@@ -57,10 +99,13 @@ export default function MinhaRevendaPage() {
       const updated = await updateMe(
         {
           name,
-          phone: phone || null,
-          city,
-          address: address || null,
-          opening_hours: openingHours || null,
+          phone,
+          city: address.city,
+          address: address.address,
+          address_number: address.number,
+          neighborhood: address.neighborhood,
+          zip_code: address.zipCode,
+          opening_hours: openingHours,
         },
         token
       );
@@ -82,7 +127,7 @@ export default function MinhaRevendaPage() {
     return (
       <main className="min-h-screen bg-brand-50">
         <Header />
-        <p className="max-w-2xl mx-auto px-4 py-8 text-stone-500">Carregando...</p>
+        <p className="max-w-3xl mx-auto px-4 py-8 text-stone-500">Carregando...</p>
       </main>
     );
   }
@@ -105,7 +150,7 @@ export default function MinhaRevendaPage() {
 
           <h1 className="text-2xl font-bold text-stone-900">Dados atualizados!</h1>
           <p className="text-stone-500 mt-2">
-            As informações da sua revenda já aparecem atualizadas para quem visita seus anúncios.
+            As informações da sua revenda já aparecem assim para quem visita seus anúncios.
           </p>
           <p className="text-sm text-stone-400 mt-6">Levando você de volta aos seus anúncios...</p>
 
@@ -124,7 +169,7 @@ export default function MinhaRevendaPage() {
     <main className="min-h-screen bg-brand-50">
       <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         <Link
           href="/meus-anuncios"
           className="text-sm text-stone-500 hover:text-brand-700 transition"
@@ -137,50 +182,63 @@ export default function MinhaRevendaPage() {
           Estes dados aparecem para o comprador nos seus anúncios.
         </p>
 
-        <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-6 mt-6 space-y-4">
-          <div>
-            <label className={labelClass}>Nome da revenda </label>
-            <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-6 mt-6">
+          <div className="flex items-center gap-5 pb-5 border-b border-stone-100">
+            <DealershipAvatar name={name || 'Revenda'} logoUrl={logoUrl} size="lg" />
+
+            <div>
+              <label className="inline-block border border-brand-500 text-brand-700 font-medium text-sm px-4 py-2 rounded-lg cursor-pointer hover:bg-brand-50 transition">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleLogoChange(e.target.files?.[0])}
+                />
+                {uploadingLogo ? 'Enviando...' : logoUrl ? 'Trocar logo' : 'Enviar logo'}
+              </label>
+              <p className="text-xs text-stone-400 mt-2">
+                JPG, PNG ou WEBP · imagem quadrada funciona melhor
+              </p>
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass}>WhatsApp</label>
-            <input
-              className={inputClass}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="16 99999-8888"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 mt-5">
+            <div className="sm:col-span-4">
+              <label className={labelClass}>Nome da revenda</label>
+              <input
+                className={inputClass}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className={labelClass}>WhatsApp</label>
+              <input
+                className={inputClass}
+                inputMode="numeric"
+                value={phone}
+                onChange={(e) => setPhone(formatPhone(e.target.value))}
+                placeholder="(16) 99999-8888"
+              />
+            </div>
+
+            <AddressFields value={address} onChange={setAddress} />
+
+            <div className="sm:col-span-6">
+              <label className={labelClass}>Horário de funcionamento</label>
+              <input
+                className={inputClass}
+                value={openingHours}
+                onChange={(e) => setOpeningHours(e.target.value)}
+                placeholder="Seg a sex, 8h às 18h · Sáb, 8h às 12h"
+              />
+            </div>
+
+            {error && <p className="sm:col-span-6 text-red-600 text-sm">{error}</p>}
           </div>
 
-          <div>
-            <label className={labelClass}>Cidade </label>
-            <input className={inputClass} value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-
-          <div>
-            <label className={labelClass}>Endereço</label>
-            <input
-              className={inputClass}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Av. Independência, 1200"
-            />
-          </div>
-
-          <div>
-            <label className={labelClass}>Horário de funcionamento</label>
-            <input
-              className={inputClass}
-              value={openingHours}
-              onChange={(e) => setOpeningHours(e.target.value)}
-              placeholder="Seg a sex, 8h às 18h · Sáb, 8h às 12h"
-            />
-          </div>
-
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-
-          <div className="border-t border-stone-100 pt-5">
+          <div className="border-t border-stone-100 pt-5 mt-5">
             <button
               onClick={handleSave}
               disabled={saving}

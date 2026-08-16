@@ -18,6 +18,10 @@ class Dealership(Base):
     password_hash = Column(String(255))
     address = Column(String(255))
     opening_hours = Column(String(255))
+    logo_url = Column(String(500))
+    neighborhood = Column(String(100))
+    zip_code = Column(String(10))
+    address_number = Column(String(20))
 
     vehicles = relationship("Vehicle", back_populates="dealership")
 

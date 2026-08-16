@@ -18,6 +18,11 @@ class DealershipOut(BaseModel):
     address: str | None
     opening_hours: str | None
     state: str
+    logo_url: str | None
+    neighborhood: str | None
+    zip_code: str | None
+    address_number: str | None
+    address_number: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -90,6 +95,11 @@ class DealershipRegister(BaseModel):
     state: str = "SP"
     address: str | None = None
     opening_hours: str | None = None
+    logo_url: str | None = None
+    neighborhood: str | None = None
+    zip_code: str | None = None
+    address_number: str | None = None
+    address_number: str | None = None
 
 
 class DealershipLogin(BaseModel):
@@ -110,3 +120,8 @@ class DealershipUpdate(BaseModel):
     state: str | None = None
     address: str | None = None
     opening_hours: str | None = None
+    logo_url: str | None = None
+    neighborhood: str | None = None
+    zip_code: str | None = None
+    address_number: str | None = None
+    address_number: str | None = None
