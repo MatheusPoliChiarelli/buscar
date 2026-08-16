@@ -11,7 +11,14 @@ from models_db import Vehicle, Dealership, VehiclePhoto
 from schemas import VehicleCreate, VehicleOut, PhotoOut, VehicleUpdate
 from services.fipe_lookup import lookup_fipe_price
 from services.fipe import get_brands, get_brand_years, get_year_models, get_brand_models, find_year_id, find_brand
-from services.fipe_lookup import lookup_fipe_price
+from services.auth import hash_password, verify_password, create_access_token
+from schemas import DealershipRegister, DealershipLogin, TokenOut
+from services.auth import decode_access_token
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+
+
+
 
 app = FastAPI(title="BusCAR API")
 
@@ -26,6 +33,26 @@ UPLOAD_DIR = Path(__file__).parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+security = HTTPBearer()
+
+
+def get_current_dealership(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> Dealership:
+    dealership_id = decode_access_token(credentials.credentials)
+
+    if not dealership_id:
+        raise HTTPException(status_code=401, detail="Sessão expirada. Faça login novamente.")
+
+    dealership = db.query(Dealership).filter(Dealership.id == dealership_id).first()
+
+    if not dealership or not dealership.active:
+        raise HTTPException(status_code=401, detail="Conta não encontrada ou desativada.")
+
+    return dealership
+
 
 
 @app.get("/")
@@ -110,12 +137,12 @@ def get_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/vehicles", response_model=VehicleOut)
-def create_vehicle(data: VehicleCreate, db: Session = Depends(get_db)):
-    dealership = db.query(Dealership).filter(Dealership.id == data.dealership_id).first()
-    if not dealership:
-        raise HTTPException(status_code=404, detail="Revenda não encontrada")
-
-    vehicle = Vehicle(**data.model_dump())
+def create_vehicle(
+    data: VehicleCreate,
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    vehicle = Vehicle(**data.model_dump(), dealership_id=dealership.id)
 
     fipe = lookup_fipe_price(
         db=db,
@@ -137,16 +164,22 @@ def create_vehicle(data: VehicleCreate, db: Session = Depends(get_db)):
     db.refresh(vehicle)
     return vehicle
 
-
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 @app.post("/vehicles/{vehicle_id}/photos", response_model=PhotoOut)
-async def upload_photo(vehicle_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_photo(
+    vehicle_id: int,
+    file: UploadFile = File(...),
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
         raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    if vehicle.dealership_id != dealership.id:
+        raise HTTPException(status_code=403, detail="Este anúncio não é seu.")
 
     extension = Path(file.filename).suffix.lower()
     if extension not in ALLOWED_EXTENSIONS:
@@ -162,37 +195,24 @@ async def upload_photo(vehicle_id: int, file: UploadFile = File(...), db: Sessio
 
     position = db.query(VehiclePhoto).filter(VehiclePhoto.vehicle_id == vehicle_id).count()
 
-    photo = VehiclePhoto(
-        vehicle_id=vehicle_id,
-        url=f"/uploads/{filename}",
-        position=position
-    )
+    photo = VehiclePhoto(vehicle_id=vehicle_id, url=f"/uploads/{filename}", position=position)
     db.add(photo)
     db.commit()
     db.refresh(photo)
     return photo
 
 
-
-@app.patch("/vehicles/{vehicle_id}", response_model=VehicleOut)
-def update_vehicle(vehicle_id: int, data: VehicleUpdate, db: Session = Depends(get_db)):
-    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(status_code=404, detail="Veículo não encontrado")
-
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(vehicle, field, value)
-
-    db.commit()
-    db.refresh(vehicle)
-    return vehicle
-
-
 @app.delete("/vehicles/{vehicle_id}")
-def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
+def delete_vehicle(
+    vehicle_id: int,
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
     if not vehicle:
         raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    if vehicle.dealership_id != dealership.id:
+        raise HTTPException(status_code=403, detail="Este anúncio não é seu.")
 
     vehicle.active = False
     db.commit()
@@ -200,7 +220,18 @@ def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
 
 
 @app.delete("/vehicles/{vehicle_id}/photos/{photo_id}")
-def delete_photo(vehicle_id: int, photo_id: int, db: Session = Depends(get_db)):
+def delete_photo(
+    vehicle_id: int,
+    photo_id: int,
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    if vehicle.dealership_id != dealership.id:
+        raise HTTPException(status_code=403, detail="Este anúncio não é seu.")
+
     photo = db.query(VehiclePhoto).filter(
         VehiclePhoto.id == photo_id,
         VehiclePhoto.vehicle_id == vehicle_id
@@ -215,6 +246,29 @@ def delete_photo(vehicle_id: int, photo_id: int, db: Session = Depends(get_db)):
     db.delete(photo)
     db.commit()
     return {"status": "ok", "message": "Foto removida"}
+
+
+
+
+@app.patch("/vehicles/{vehicle_id}", response_model=VehicleOut)
+def update_vehicle(
+    vehicle_id: int,
+    data: VehicleUpdate,
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Veículo não encontrado")
+    if vehicle.dealership_id != dealership.id:
+        raise HTTPException(status_code=403, detail="Este anúncio não é seu.")
+
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(vehicle, field, value)
+
+    db.commit()
+    db.refresh(vehicle)
+    return vehicle
 
 
 @app.get("/fipe/brands")
@@ -295,3 +349,66 @@ def fipe_price(
     if not result:
         raise HTTPException(status_code=404, detail="Não encontramos esse veículo na tabela FIPE.")
     return result
+
+
+@app.post("/auth/register", response_model=TokenOut)
+def register(data: DealershipRegister, db: Session = Depends(get_db)):
+    existing = db.query(Dealership).filter(Dealership.email == data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Já existe uma conta com esse e-mail.")
+
+    if len(data.password) < 8:
+        raise HTTPException(status_code=400, detail="A senha precisa ter pelo menos 8 caracteres.")
+
+    dealership = Dealership(
+        name=data.name,
+        email=data.email.lower().strip(),
+        phone=data.phone,
+        city=data.city,
+        state=data.state,
+        password_hash=hash_password(data.password),
+    )
+    db.add(dealership)
+    db.commit()
+    db.refresh(dealership)
+
+    return {
+        "access_token": create_access_token(dealership.id),
+        "dealership": dealership,
+    }
+
+
+@app.post("/auth/login", response_model=TokenOut)
+def login(data: DealershipLogin, db: Session = Depends(get_db)):
+    dealership = db.query(Dealership).filter(Dealership.email == data.email.lower().strip()).first()
+
+    if not dealership or not dealership.password_hash:
+        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+
+    if not verify_password(data.password, dealership.password_hash):
+        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+
+    if not dealership.active:
+        raise HTTPException(status_code=403, detail="Esta conta está desativada.")
+
+    return {
+        "access_token": create_access_token(dealership.id),
+        "dealership": dealership,
+    }
+
+
+
+
+
+
+@app.get("/my-vehicles", response_model=list[VehicleOut])
+def my_vehicles(
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(Vehicle)
+        .filter(Vehicle.dealership_id == dealership.id)
+        .order_by(Vehicle.created_at.desc())
+        .all()
+    )

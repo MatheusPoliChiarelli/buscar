@@ -20,7 +20,6 @@ class DealershipOut(BaseModel):
 
 
 class VehicleCreate(BaseModel):
-    dealership_id: int
     brand: str
     model: str
     version: str | None = None
@@ -73,3 +72,24 @@ class VehicleUpdate(BaseModel):
     active: bool | None = None
     has_history_report: bool | None = None
     is_inspected: bool | None = None
+
+
+
+class DealershipRegister(BaseModel):
+    name: str
+    email: str
+    password: str
+    phone: str | None = None
+    city: str
+    state: str = "SP"
+
+
+class DealershipLogin(BaseModel):
+    email: str
+    password: str
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    dealership: DealershipOut

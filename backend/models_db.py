@@ -15,6 +15,7 @@ class Dealership(Base):
     email = Column(String(150), unique=True)
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    password_hash = Column(String(255))
 
     vehicles = relationship("Vehicle", back_populates="dealership")
 
