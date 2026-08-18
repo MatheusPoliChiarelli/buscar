@@ -23,6 +23,7 @@ class DealershipOut(BaseModel):
     zip_code: str | None
     address_number: str | None
     address_number: str | None
+    opening_hours_json: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -100,6 +101,7 @@ class DealershipRegister(BaseModel):
     zip_code: str | None = None
     address_number: str | None = None
     address_number: str | None = None
+    opening_hours_json: str | None = None
 
 
 class DealershipLogin(BaseModel):
@@ -125,3 +127,4 @@ class DealershipUpdate(BaseModel):
     zip_code: str | None = None
     address_number: str | None = None
     address_number: str | None = None
+    

@@ -105,7 +105,7 @@ export default function MeusAnunciosPage() {
             <h2 className="text-lg font-semibold text-stone-900">Sua garagem ainda está vazia</h2>
             <p className="text-stone-500 mt-2 max-w-md">
               Publique o primeiro veículo e ele aparece na busca de quem está procurando carro na
-              região.
+              região
             </p>
 
             <Link

@@ -393,6 +393,7 @@ def register(data: DealershipRegister, db: Session = Depends(get_db)):
         neighborhood=data.neighborhood,
         zip_code=data.zip_code,
         opening_hours=data.opening_hours,
+        opening_hours_json=data.opening_hours_json,
         password_hash=hash_password(data.password),
     )
 
@@ -406,6 +407,12 @@ def register(data: DealershipRegister, db: Session = Depends(get_db)):
     }
 
 
+from datetime import datetime, timedelta, timezone
+
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_MINUTES = 15
+
+
 @app.post("/auth/login", response_model=TokenOut)
 def login(data: DealershipLogin, db: Session = Depends(get_db)):
     dealership = db.query(Dealership).filter(Dealership.email == data.email.lower().strip()).first()
@@ -413,18 +420,45 @@ def login(data: DealershipLogin, db: Session = Depends(get_db)):
     if not dealership or not dealership.password_hash:
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
 
+    now = datetime.utcnow()
+
+    if dealership.locked_until and dealership.locked_until > now:
+        minutes = max(1, int((dealership.locked_until - now).total_seconds() // 60) + 1)
+        raise HTTPException(
+            status_code=429,
+            detail=f"Muitas tentativas. Tente novamente em {minutes} minuto(s) ou redefina sua senha.",
+        )
+
     if not verify_password(data.password, dealership.password_hash):
-        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+        dealership.failed_login_attempts = (dealership.failed_login_attempts or 0) + 1
+
+        if dealership.failed_login_attempts >= MAX_LOGIN_ATTEMPTS:
+            dealership.locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
+            dealership.failed_login_attempts = 0
+            db.commit()
+            raise HTTPException(
+                status_code=429,
+                detail=f"Muitas tentativas. Sua conta ficou bloqueada por {LOCKOUT_MINUTES} minutos.",
+            )
+
+        db.commit()
+        remaining = MAX_LOGIN_ATTEMPTS - dealership.failed_login_attempts
+        raise HTTPException(
+            status_code=401,
+            detail=f"E-mail ou senha incorretos. Restam {remaining} tentativa(s).",
+        )
 
     if not dealership.active:
         raise HTTPException(status_code=403, detail="Esta conta está desativada.")
+
+    dealership.failed_login_attempts = 0
+    dealership.locked_until = None
+    db.commit()
 
     return {
         "access_token": create_access_token(dealership.id),
         "dealership": dealership,
     }
-
-
 
 
 
@@ -483,12 +517,16 @@ def list_dealerships(db: Session = Depends(get_db)):
             "city": d.city,
             "state": d.state,
             "address": d.address,
+            "address_number": d.address_number,
+            "neighborhood": d.neighborhood,
+            "zip_code": d.zip_code,
             "opening_hours": d.opening_hours,
+            "opening_hours_json": d.opening_hours_json,
+            "logo_url": d.logo_url,
             "vehicle_count": count,
         }
         for d, count in rows
     ]
-
 
 @app.post("/me/logo", response_model=DealershipOut)
 async def upload_logo(
@@ -513,6 +551,22 @@ async def upload_logo(
     (UPLOAD_DIR / filename).write_bytes(content)
 
     dealership.logo_url = f"/uploads/{filename}"
+    db.commit()
+    db.refresh(dealership)
+    return dealership
+
+
+@app.delete("/me/logo", response_model=DealershipOut)
+def delete_logo(
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    if dealership.logo_url:
+        filepath = UPLOAD_DIR / Path(dealership.logo_url).name
+        if filepath.exists():
+            filepath.unlink()
+
+    dealership.logo_url = None
     db.commit()
     db.refresh(dealership)
     return dealership

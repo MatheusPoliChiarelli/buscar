@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import DealershipAvatar from '@/components/DealershipAvatar';
 
 export default function Header() {
   const router = useRouter();
@@ -55,7 +56,10 @@ export default function Header() {
           </Link>
 
           <nav className="hidden sm:flex items-center gap-1">
-            <Link href="/" className={navClass(pathname === '/')}>
+            <Link
+              href="/"
+              className={navClass(pathname === '/' || pathname.startsWith('/veiculo'))}
+            >
               Carros
             </Link>
             <Link href="/revendas" className={navClass(pathname.startsWith('/revendas'))}>
@@ -65,16 +69,20 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-5">
-          <span className="hidden lg:block text-lg text-brand-100">Ribeirão Preto - SP</span>
+          <span className="hidden lg:block text-sm text-brand-100">Ribeirão Preto - SP</span>
 
           {dealership ? (
             <div ref={menuRef} className="relative">
               <button
                 onClick={() => setOpen(!open)}
-                className="h-9 w-9 rounded-full bg-white text-brand-700 font-bold text-sm flex items-center justify-center hover:bg-brand-500 hover:text-white transition"
+                className="flex rounded-full hover:ring-2 hover:ring-white/60 transition"
                 aria-label="Menu da conta"
               >
-                {initials}
+                <DealershipAvatar
+                  name={dealership.name}
+                  logoUrl={dealership.logo_url}
+                  size="sm"
+                />
               </button>
 
               {open && (
@@ -82,25 +90,27 @@ export default function Header() {
                   <Link
                     href="/minha-revenda"
                     onClick={() => setOpen(false)}
-                    className="block px-4 py-3 border-b border-stone-100 hover:bg-brand-50 transition"
+                    className="block px-4 py-3 border-b border-stone-500 hover:bg-brand-500 transition group"
                   >
-                    <p className="text-sm font-semibold text-stone-900 truncate">
+                    <p className="text-sm font-semibold text-stone-900 group-hover:text-white truncate">
                       {dealership.name}
                     </p>
-                    <p className="text-xs text-stone-500 truncate">Editar dados da revenda</p>
+                    <p className="text-xs text-stone-500 group-hover:text-white/80 truncate">
+                      Editar dados da revenda
+                    </p>
                   </Link>
 
                   <Link
                     href="/meus-anuncios"
                     onClick={() => setOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-50 transition"
+                    className="block px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-500 hover:text-white transition"
                   >
                     Meus anúncios
                   </Link>
                   <Link
                     href="/anunciar"
                     onClick={() => setOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-50 transition"
+                    className="block px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-500 hover:text-white transition"
                   >
                     Novo anúncio
                   </Link>
@@ -111,7 +121,7 @@ export default function Header() {
                       signOut();
                       router.push('/');
                     }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-50 border-t border-stone-100 transition"
+                    className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-500 hover:text-white border-t border-stone-100 transition"
                   >
                     Sair
                   </button>
@@ -121,7 +131,7 @@ export default function Header() {
           ) : (
             <Link
               href="/entrar"
-              className="text-sm font-medium bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg transition"
+              className="bg-stone-900 text-white font-semibold px-5 py-2.5 rounded-lg shadow-sm hover:bg-stone-800 hover:shadow-md transition-all"
             >
               Anunciar
             </Link>

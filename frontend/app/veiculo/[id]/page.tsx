@@ -43,6 +43,7 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -90,16 +91,60 @@ export default function VehiclePage({ params }: { params: Promise<{ id: string }
 return (
     <main className="min-h-screen bg-brand-50">
       <Header />
+      <div className="max-w-5xl mx-auto px-4 pt-6">
+        <Link href="/" className="text-sm text-stone-500 hover:text-brand-700 transition">
+          ‹ Todos os carros
+        </Link>
+      </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:grid-rows-[auto_1fr]">
+      <div className="max-w-5xl mx-auto px-4 pb-6 pt-3 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:grid-rows-[auto_1fr]">
         <div className="lg:col-span-2 bg-white rounded-xl border border-brand-200 overflow-hidden">
-          <div className="h-80 bg-stone-100">
+          <div className="h-80 bg-stone-100 relative group">
             {vehicle.photos.length > 0 ? (
-              <img
-                src={photoUrl(vehicle.photos[selectedPhoto].url)}
-                alt={`${vehicle.brand} ${vehicle.model}`}
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img
+                  src={photoUrl(vehicle.photos[selectedPhoto].url)}
+                  alt={`${vehicle.brand} ${vehicle.model}`}
+                  className="w-full h-full object-cover cursor-zoom-in"
+                  onClick={() => setZoomed(true)}
+                />
+
+                {vehicle.photos.length > 1 && (
+                  <>
+                    <button
+                      onClick={() =>
+                        setSelectedPhoto(
+                          (selectedPhoto - 1 + vehicle.photos.length) % vehicle.photos.length
+                        )
+                      }
+                      className="absolute left-3 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center rounded-full bg-white/90 text-stone-800 shadow-md hover:bg-white transition "
+                      aria-label="Foto anterior"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 18l-6-6 6-6" />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedPhoto((selectedPhoto + 1) % vehicle.photos.length)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center rounded-full bg-white/90 text-stone-800 shadow-md hover:bg-white transition "
+                      aria-label="Próxima foto"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </button>
+
+                    <span className="absolute bottom-3 left-3 text-xs font-medium px-2 py-1 rounded-md bg-stone-900/70 text-white transition">
+                      Clique para ampliar
+                    </span>
+
+                    <span className="absolute bottom-3 right-3 text-xs font-medium px-2 py-1 rounded-md bg-stone-900/70 text-white">
+                      {selectedPhoto + 1} / {vehicle.photos.length}
+                    </span>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-stone-400">
                 Sem foto disponível
@@ -214,6 +259,64 @@ return (
           )}
         </div>
       </div>
+
+      {zoomed && vehicle.photos.length > 0 && (
+        <div
+          className="fixed inset-0 bg-stone-900/90 flex items-center justify-center p-4 z-50"
+          onClick={() => setZoomed(false)}
+        >
+          <button
+            onClick={() => setZoomed(false)}
+            className="absolute top-4 right-4 h-11 w-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+            aria-label="Fechar"
+          >
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+
+          <img
+            src={photoUrl(vehicle.photos[selectedPhoto].url)}
+            alt={`${vehicle.brand} ${vehicle.model}`}
+            className="max-h-full max-w-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {vehicle.photos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPhoto((selectedPhoto - 1 + vehicle.photos.length) % vehicle.photos.length);
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                aria-label="Foto anterior"
+              >
+                <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPhoto((selectedPhoto + 1) % vehicle.photos.length);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                aria-label="Próxima foto"
+              >
+                <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+
+              <span className="absolute bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium px-3 py-1.5 rounded-md bg-white/10 text-white">
+                {selectedPhoto + 1} / {vehicle.photos.length}
+              </span>
+            </>
+          )}
+        </div>
+      )}
     </main>
   );
 }

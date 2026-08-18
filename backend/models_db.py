@@ -22,6 +22,9 @@ class Dealership(Base):
     neighborhood = Column(String(100))
     zip_code = Column(String(10))
     address_number = Column(String(20))
+    opening_hours_json = Column(Text)
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime)
 
     vehicles = relationship("Vehicle", back_populates="dealership")
 

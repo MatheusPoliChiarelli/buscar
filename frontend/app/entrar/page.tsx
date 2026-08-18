@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import AddressFields, { type AddressValue } from '@/components/AddressFields';
-import { login, register } from '@/lib/api';
+import DealershipAvatar from '@/components/DealershipAvatar';
+import { login, register, uploadLogo } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatPhone } from '@/lib/cep';
+import { formatHours } from '@/lib/hours';
+import OpeningHoursFields from '@/components/OpeningHoursFields';
+import { type HourBlock } from '@/lib/hours';
 
 export default function EntrarPage() {
   const router = useRouter();
@@ -17,7 +21,11 @@ export default function EntrarPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [openingHours, setOpeningHours] = useState('');
+const [hours, setHours] = useState<HourBlock[]>([
+    { days: ['mon', 'tue', 'wed', 'thu', 'fri'], open: '08:00', close: '18:00' },
+  ]);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [address, setAddress] = useState<AddressValue>({
     zipCode: '',
     address: '',
@@ -28,8 +36,21 @@ export default function EntrarPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(logoFile);
+    setLogoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [logoFile]);
+
+
   async function handleSubmit() {
     setError('');
+
+    const validHours = hours.filter((h) => h.days.length > 0 && h.open && h.close);
 
     if (!email || !password) {
       setError('Preencha e-mail e senha.');
@@ -44,10 +65,14 @@ export default function EntrarPage() {
         !address.address ||
         !address.number ||
         !address.neighborhood ||
-        !address.city ||
-        !openingHours)
+        !address.city)
     ) {
       setError('Preencha todos os campos.');
+      return;
+    }
+
+    if (mode === 'register' && validHours.length === 0) {
+      setError('Informe pelo menos um horário de funcionamento.');
       return;
     }
 
@@ -67,10 +92,20 @@ export default function EntrarPage() {
               address_number: address.number,
               neighborhood: address.neighborhood,
               zip_code: address.zipCode,
-              opening_hours: openingHours,
+              opening_hours_json: JSON.stringify(validHours),
             });
 
-      signIn(result.access_token, result.dealership);
+      let dealership = result.dealership;
+
+      if (mode === 'register' && logoFile) {
+        try {
+          dealership = await uploadLogo(logoFile, result.access_token);
+        } catch (e) {
+          console.error('Falha ao enviar a logo', e);
+        }
+      }
+
+      signIn(result.access_token, dealership);
       router.push('/meus-anuncios');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Algo deu errado.');
@@ -98,6 +133,27 @@ export default function EntrarPage() {
               ? 'Acesse para gerenciar os anúncios da sua revenda.'
               : 'Cadastre sua revenda e comece a anunciar em Ribeirão Preto e região.'}
           </p>
+
+          {mode === 'register' && (
+            <div className="flex items-center gap-5 mt-6 pb-6 border-b border-stone-100">
+              <DealershipAvatar name={name || 'Revenda'} logoUrl={logoPreview} size="lg" />
+
+              <div>
+                <label className="inline-block border border-brand-500 text-brand-700 font-medium text-sm px-4 py-2 rounded-lg cursor-pointer hover:bg-brand-50 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  />
+                  {logoFile ? 'Trocar logo' : 'Enviar logo'}
+                </label>
+                <p className="text-xs text-stone-400 mt-2">
+                  Opcional · JPG, PNG ou WEBP · imagem quadrada funciona melhor
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-6 gap-4">
             {mode === 'register' && (
@@ -127,12 +183,7 @@ export default function EntrarPage() {
 
                 <div className="sm:col-span-6">
                   <label className={labelClass}>Horário de funcionamento</label>
-                  <input
-                    className={inputClass}
-                    value={openingHours}
-                    onChange={(e) => setOpeningHours(e.target.value)}
-                    placeholder="Seg a sex, 8h às 18h · Sáb, 8h às 12h"
-                  />
+                  <OpeningHoursFields value={hours} onChange={setHours} />
                 </div>
               </>
             )}
@@ -177,16 +228,21 @@ export default function EntrarPage() {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError('');
               }}
-              className="text-sm text-stone-600 hover:text-brand-700 transition"
+              className="text-sm text-stone-600 group"
             >
               {mode === 'login' ? (
                 <>
                   Ainda não tem conta?{' '}
-                  <span className="font-medium text-brand-700">Cadastre sua revenda</span>
+                  <span className="relative font-semibold text-brand-700 after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-0 after:bg-brand-600 after:rounded-full after:transition-all after:duration-300 group-hover:after:w-full">
+                    Cadastre sua revenda
+                  </span>
                 </>
               ) : (
                 <>
-                  Já tem conta? <span className="font-medium text-brand-700">Entrar</span>
+                  Já tem conta?{' '}
+                  <span className="relative font-semibold text-brand-700 after:absolute after:left-0 after:-bottom-0.5 after:h-0.5 after:w-0 after:bg-brand-600 after:rounded-full after:transition-all after:duration-300 group-hover:after:w-full">
+                    Entrar
+                  </span>
                 </>
               )}
             </button>

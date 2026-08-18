@@ -192,17 +192,11 @@ async function handleSubmit() {
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
             <Link
-              href={`/veiculo/${createdId}`}
-              className="bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-brand-700 hover:shadow-md transition-all"
-            >
-              Ver o anúncio
-            </Link>
-            <Link
-              href="/meus-anuncios"
-              className="border border-brand-500 text-brand-700 font-medium px-6 py-3 rounded-lg hover:bg-brand-50 transition"
-            >
-              Ver meus anúncios
-            </Link>
+            href="/meus-anuncios"
+            className="inline-block mt-8 bg-brand-600 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-brand-700 hover:shadow-md transition-all"
+          >
+            Ver meus anúncios
+          </Link>
           </div>
         </div>
       </main>

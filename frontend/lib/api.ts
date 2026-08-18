@@ -18,6 +18,7 @@ export type Dealership = {
   opening_hours?: string | null;
   logo_url?: string | null;
   address_number?: string | null;
+  opening_hours_json?: string | null;
 };
 
 
@@ -280,6 +281,7 @@ export async function register(data: {
   neighborhood?: string;
   zip_code?: string;
   opening_hours?: string;
+  opening_hours_json?: string;
 }): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -379,6 +381,18 @@ export async function uploadLogo(file: File, token: string): Promise<Dealership>
   });
   if (!response.ok) {
     throw new Error("Não foi possível enviar a logo");
+  }
+  return response.json();
+}
+
+
+export async function deleteLogo(token: string): Promise<Dealership> {
+  const response = await fetch(`${API_URL}/me/logo`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("Não foi possível remover a logo");
   }
   return response.json();
 }

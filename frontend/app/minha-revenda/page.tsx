@@ -6,9 +6,12 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import DealershipAvatar from '@/components/DealershipAvatar';
 import AddressFields, { type AddressValue } from '@/components/AddressFields';
-import { getMe, updateMe, uploadLogo } from '@/lib/api';
+import { getMe, updateMe, uploadLogo, deleteLogo } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { formatPhone } from '@/lib/cep';
+import OpeningHoursFields from '@/components/OpeningHoursFields';
+import { type HourBlock } from '@/lib/hours';
+
 
 export default function MinhaRevendaPage() {
   const router = useRouter();
@@ -31,6 +34,9 @@ export default function MinhaRevendaPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [hours, setHours] = useState<HourBlock[]>([
+    { days: ['mon', 'tue', 'wed', 'thu', 'fri'], open: '08:00', close: '18:00' },
+  ]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -52,6 +58,15 @@ export default function MinhaRevendaPage() {
           neighborhood: data.neighborhood || '',
           city: data.city || '',
         });
+
+        if (data.opening_hours_json) {
+          try {
+            const parsed = JSON.parse(data.opening_hours_json);
+            if (Array.isArray(parsed) && parsed.length > 0) setHours(parsed);
+          } catch {
+            // mantém o padrão
+          }
+        }
       })
       .catch(() => setError('Não foi possível carregar seus dados.'))
       .finally(() => setLoading(false));
@@ -74,8 +89,31 @@ export default function MinhaRevendaPage() {
     }
   }
 
+
+
+  async function handleRemoveLogo() {
+    if (!token) return;
+    setUploadingLogo(true);
+    setError('');
+
+    try {
+      const updated = await deleteLogo(token);
+      setLogoUrl(null);
+      signIn(token, updated);
+    } catch (e) {
+      setError('Não foi possível remover a logo.');
+      console.error(e);
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+
+
   async function handleSave() {
     if (!token) return;
+
+    const validHours = hours.filter((h) => h.days.length > 0 && h.open && h.close);
 
     if (
       !name ||
@@ -105,7 +143,7 @@ export default function MinhaRevendaPage() {
           address_number: address.number,
           neighborhood: address.neighborhood,
           zip_code: address.zipCode,
-          opening_hours: openingHours,
+          opening_hours_json: JSON.stringify(validHours),
         },
         token
       );
@@ -187,15 +225,29 @@ export default function MinhaRevendaPage() {
             <DealershipAvatar name={name || 'Revenda'} logoUrl={logoUrl} size="lg" />
 
             <div>
-              <label className="inline-block border border-brand-500 text-brand-700 font-medium text-sm px-4 py-2 rounded-lg cursor-pointer hover:bg-brand-50 transition">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleLogoChange(e.target.files?.[0])}
-                />
-                {uploadingLogo ? 'Enviando...' : logoUrl ? 'Trocar logo' : 'Enviar logo'}
-              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-block border border-brand-500 text-brand-700 font-medium text-sm px-4 py-2 rounded-lg cursor-pointer hover:bg-brand-100 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleLogoChange(e.target.files?.[0])}
+                  />
+                  {uploadingLogo ? 'Enviando...' : logoUrl ? 'Trocar logo' : 'Enviar logo'}
+                </label>
+
+                {logoUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    disabled={uploadingLogo}
+                    className="bg-red-600 text-white font-medium text-sm px-4 py-2 rounded-lg shadow-sm hover:bg-red-700 hover:shadow-md transition-all disabled:opacity-50"
+                  >
+                    Remover logo
+                  </button>
+                )}
+              </div>
+
               <p className="text-xs text-stone-400 mt-2">
                 JPG, PNG ou WEBP · imagem quadrada funciona melhor
               </p>
@@ -227,12 +279,7 @@ export default function MinhaRevendaPage() {
 
             <div className="sm:col-span-6">
               <label className={labelClass}>Horário de funcionamento</label>
-              <input
-                className={inputClass}
-                value={openingHours}
-                onChange={(e) => setOpeningHours(e.target.value)}
-                placeholder="Seg a sex, 8h às 18h · Sáb, 8h às 12h"
-              />
+              <OpeningHoursFields value={hours} onChange={setHours} />
             </div>
 
             {error && <p className="sm:col-span-6 text-red-600 text-sm">{error}</p>}

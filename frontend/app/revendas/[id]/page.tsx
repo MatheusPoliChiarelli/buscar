@@ -11,6 +11,7 @@ import {
   type Dealership,
   type Vehicle,
 } from '@/lib/api';
+import { formatHours } from '@/lib/hours';
 
 const FUEL_LABELS: Record<string, string> = {
   gasolina: 'Gasolina',
@@ -127,8 +128,10 @@ export default function RevendaPage({ params }: { params: Promise<{ id: string }
                 <p className="text-stone-600">CEP {dealership.zip_code}</p>
               )}
 
-              {dealership.opening_hours && (
-                <p className="text-sm text-stone-500 mt-3">{dealership.opening_hours}</p>
+              {(dealership.opening_hours_json || dealership.opening_hours) && (
+                <p className="text-stone-600 mt-3">
+                  {formatHours(dealership.opening_hours_json) || dealership.opening_hours}
+                </p>
               )}
             </div>
 
@@ -148,72 +151,95 @@ export default function RevendaPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <h2 className="text-lg font-semibold text-stone-900 mt-8">
-          {vehicles.length === 0
-            ? 'Nenhum carro anunciado no momento'
-            : vehicles.length === 1
-            ? '1 carro anunciado'
-            : `${vehicles.length} carros anunciados`}
-        </h2>
+        {vehicles.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-20 animate-fade-up">
+            <svg viewBox="0 -64 640 640" className="h-20 w-auto fill-brand-200 mb-1" aria-hidden="true">
+              <path d="M544 192h-16L419.22 56.02A64.025 64.025 0 0 0 369.24 32H155.33c-26.17 0-49.7 15.93-59.42 40.23L48 194.26C20.44 201.4 0 226.21 0 256v112c0 8.84 7.16 16 16 16h48c0 53.02 42.98 96 96 96s96-42.98 96-96h128c0 53.02 42.98 96 96 96s96-42.98 96-96h48c8.84 0 16-7.16 16-16v-80c0-53.02-42.98-96-96-96zM160 432c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48zm72-240H116.93l38.4-96H232v96zm48 0V96h89.24l76.8 96H280zm200 240c-26.47 0-48-21.53-48-48s21.53-48 48-48 48 21.53 48 48-21.53 48-48 48z" />
+            </svg>
 
-        {vehicles.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-            {vehicles.map((vehicle, index) => (
-              <Link
-                key={vehicle.id}
-                href={`/veiculo/${vehicle.id}`}
-                style={{ animationDelay: `${index * 60}ms` }}
-                className="animate-fade-up bg-white rounded-xl border border-brand-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
-              >
-                <div className="h-44 bg-stone-100">
-                  {vehicle.photos.length > 0 ? (
-                    <img
-                      src={photoUrl(vehicle.photos[0].url)}
-                      alt={`${vehicle.brand} ${vehicle.model}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">
-                      Sem foto
-                    </div>
-                  )}
-                </div>
+            <div className="w-40 border-t-2 border-dashed border-brand-200 mb-6" />
 
-                <div className="p-4 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold text-stone-900">
-                      {vehicle.brand} {vehicle.model}
-                    </p>
+            <h2 className="text-lg font-semibold text-stone-900">
+              Esta revenda ainda não publicou anúncios
+            </h2>
+            <p className="text-stone-500 mt-2 max-w-md">
+              Ela ainda não tem carros anunciados no BusCAR. Vale chamar no WhatsApp para saber o
+              que está chegando, ou voltar em outro momento
+            </p>
 
-                    {vehicle.fipe_price && (
-                      <span
-                        className={`shrink-0 text-[13px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md border ${
-                          vehicle.price <= vehicle.fipe_price
-                            ? 'border-money-600/30 text-money-700 bg-money-600/5'
-                            : 'border-brand-500/30 text-brand-700 bg-brand-500/5'
-                        }`}
-                      >
-                        FIPE {formatPrice(vehicle.fipe_price)}
-                      </span>
+            <Link
+              href="/revendas"
+              className="mt-6 bg-brand-600 text-white font-semibold px-6 py-2.5 rounded-lg shadow-sm hover:bg-brand-700 hover:shadow-md transition-all"
+            >
+              Ver outras revendas
+            </Link>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-lg font-semibold text-stone-900 mt-8">
+              {vehicles.length === 1
+                ? '1 carro anunciado'
+                : `${vehicles.length} carros anunciados`}
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+              {vehicles.map((vehicle, index) => (
+                <Link
+                  key={vehicle.id}
+                  href={`/veiculo/${vehicle.id}`}
+                  style={{ animationDelay: `${index * 60}ms` }}
+                  className="animate-fade-up bg-white rounded-xl border border-brand-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
+                >
+                  <div className="h-44 bg-stone-100">
+                    {vehicle.photos.length > 0 ? (
+                      <img
+                        src={photoUrl(vehicle.photos[0].url)}
+                        alt={`${vehicle.brand} ${vehicle.model}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">
+                        Sem foto
+                      </div>
                     )}
                   </div>
 
-                  <p className="text-sm text-stone-500">
-                    {vehicle.version || '—'} · {vehicle.year}
-                  </p>
+                  <div className="p-4 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-stone-900">
+                        {vehicle.brand} {vehicle.model}
+                      </p>
 
-                  <p className="text-2xl font-bold text-money-700 mt-2">
-                    {formatPrice(vehicle.price)}
-                  </p>
+                      {vehicle.fipe_price && (
+                        <span
+                          className={`shrink-0 text-[13px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md border ${
+                            vehicle.price <= vehicle.fipe_price
+                              ? 'border-money-600/30 text-money-700 bg-money-600/5'
+                              : 'border-brand-500/30 text-brand-700 bg-brand-500/5'
+                          }`}
+                        >
+                          FIPE {formatPrice(vehicle.fipe_price)}
+                        </span>
+                      )}
+                    </div>
 
-                  <p className="text-sm text-stone-500 mt-1">
-                    {formatMileage(vehicle.mileage)} · {formatTransmission(vehicle.transmission)} ·{' '}
-                    {formatFuel(vehicle.fuel)}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+                    <p className="text-sm text-stone-500">
+                      {vehicle.version || '—'} · {vehicle.year}
+                    </p>
+
+                    <p className="text-2xl font-bold text-money-700 mt-2">
+                      {formatPrice(vehicle.price)}
+                    </p>
+
+                    <p className="text-sm text-stone-500 mt-1">
+                      {formatMileage(vehicle.mileage)} · {formatTransmission(vehicle.transmission)} ·{' '}
+                      {formatFuel(vehicle.fuel)}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </main>

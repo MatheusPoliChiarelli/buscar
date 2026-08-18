@@ -10,6 +10,9 @@ export default function RevendasPage() {
   const [dealerships, setDealerships] = useState<DealershipWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchName, setSearchName] = useState('');
+  const [searchAddress, setSearchAddress] = useState('');
+  const [searchNeighborhood, setSearchNeighborhood] = useState('');
 
   useEffect(() => {
     listDealerships()
@@ -18,6 +21,35 @@ export default function RevendasPage() {
       .finally(() => setLoading(false));
   }, []);
 
+
+
+  function normalize(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+const hasFilter = !!(searchName || searchAddress || searchNeighborhood);
+
+const filtered = dealerships.filter((d) => {
+    if (searchName && !normalize(d.name).includes(normalize(searchName))) {
+      return false;
+    }
+    if (searchAddress && !normalize(d.address || '').includes(normalize(searchAddress))) {
+      return false;
+    }
+    if (
+      searchNeighborhood &&
+      !normalize(d.neighborhood || '').includes(normalize(searchNeighborhood))
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+
   return (
     <main className="min-h-screen bg-brand-50">
       <Header />
@@ -25,8 +57,30 @@ export default function RevendasPage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-stone-900">Revendas parceiras</h1>
         <p className="text-stone-500 mt-1">
-          Lojas de Ribeirão Preto e região que anunciam no BusCAR.
+          Lojas de Ribeirão Preto que anunciam no BusCAR
         </p>
+
+
+        <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 mt-6 flex flex-wrap gap-3">
+          <input
+            className="border border-brand-200 rounded-lg px-3 py-2.5 flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-brand-400"
+            placeholder="Nome da revenda"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+          />
+          <input
+            className="border border-brand-200 rounded-lg px-3 py-2.5 flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-brand-400"
+            placeholder="Rua"
+            value={searchAddress}
+            onChange={(e) => setSearchAddress(e.target.value)}
+          />
+          <input
+            className="border border-brand-200 rounded-lg px-3 py-2.5 flex-1 min-w-40 focus:outline-none focus:ring-2 focus:ring-brand-400"
+            placeholder="Bairro"
+            value={searchNeighborhood}
+            onChange={(e) => setSearchNeighborhood(e.target.value)}
+          />
+        </div>
 
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
@@ -42,12 +96,16 @@ export default function RevendasPage() {
 
         {error && <p className="text-red-600 mt-6">{error}</p>}
 
-        {!loading && !error && dealerships.length === 0 && (
-          <p className="text-stone-500 mt-6">Nenhuma revenda cadastrada ainda.</p>
+        {!loading && !error && filtered.length === 0 && (
+          <p className="text-stone-500 mt-6">
+            {hasFilter
+              ? 'Nenhuma revenda encontrada com esses termos'
+              : 'Nenhuma revenda cadastrada ainda'}
+          </p>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-          {dealerships.map((dealership, index) => (
+          {filtered.map((dealership, index) => (
             <Link
               key={dealership.id}
               href={`/revendas/${dealership.id}`}
