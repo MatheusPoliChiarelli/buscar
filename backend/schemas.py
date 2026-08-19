@@ -127,4 +127,13 @@ class DealershipUpdate(BaseModel):
     zip_code: str | None = None
     address_number: str | None = None
     address_number: str | None = None
-    
+
+
+
+class PasswordResetRequest(BaseModel):
+    email: str
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    password: str

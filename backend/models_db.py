@@ -25,6 +25,8 @@ class Dealership(Base):
     opening_hours_json = Column(Text)
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime)
+    reset_token = Column(String(255))
+    reset_token_expires = Column(DateTime)
 
     vehicles = relationship("Vehicle", back_populates="dealership")
 

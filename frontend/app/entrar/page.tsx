@@ -11,6 +11,7 @@ import { formatPhone } from '@/lib/cep';
 import { formatHours } from '@/lib/hours';
 import OpeningHoursFields from '@/components/OpeningHoursFields';
 import { type HourBlock } from '@/lib/hours';
+import Link from 'next/link';
 
 export default function EntrarPage() {
   const router = useRouter();
@@ -210,6 +211,17 @@ const [hours, setHours] = useState<HourBlock[]>([
                 placeholder={mode === 'register' ? 'Mínimo 8 caracteres' : ''}
               />
             </div>
+
+            {mode === 'login' && (
+              <div className="sm:col-span-6 -mt-2">
+                <Link
+                  href="/esqueci-senha"
+                  className="text-sm text-stone-500 hover:text-brand-700 transition"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
+            )}
 
             {error && <p className="sm:col-span-6 text-sm text-red-600">{error}</p>}
 

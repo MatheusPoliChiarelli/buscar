@@ -18,6 +18,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from schemas import DealershipUpdate
 from schemas import DealershipRegister, DealershipLogin, TokenOut, DealershipUpdate, DealershipOut
 from sqlalchemy import func
+import secrets
+from services.email import send_password_reset
+from schemas import PasswordResetRequest, PasswordResetConfirm
 
 
 
@@ -570,3 +573,48 @@ def delete_logo(
     db.commit()
     db.refresh(dealership)
     return dealership
+
+
+RESET_TOKEN_HOURS = 1
+
+
+@app.post("/auth/forgot-password")
+def forgot_password(data: PasswordResetRequest, db: Session = Depends(get_db)):
+    dealership = db.query(Dealership).filter(
+        Dealership.email == data.email.lower().strip()
+    ).first()
+
+    if dealership and dealership.active:
+        token = secrets.token_urlsafe(32)
+        dealership.reset_token = token
+        dealership.reset_token_expires = datetime.utcnow() + timedelta(hours=RESET_TOKEN_HOURS)
+        db.commit()
+
+        send_password_reset(dealership.email, dealership.name, token)
+
+    return {
+        "message": "Se existir uma conta com esse e-mail, enviamos as instruções para redefinir a senha."
+    }
+
+
+@app.post("/auth/reset-password")
+def reset_password(data: PasswordResetConfirm, db: Session = Depends(get_db)):
+    if len(data.password) < 8:
+        raise HTTPException(status_code=400, detail="A senha precisa ter pelo menos 8 caracteres.")
+
+    dealership = db.query(Dealership).filter(Dealership.reset_token == data.token).first()
+
+    if not dealership or not dealership.reset_token_expires:
+        raise HTTPException(status_code=400, detail="Link inválido ou já utilizado.")
+
+    if dealership.reset_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Este link expirou. Peça um novo.")
+
+    dealership.password_hash = hash_password(data.password)
+    dealership.reset_token = None
+    dealership.reset_token_expires = None
+    dealership.failed_login_attempts = 0
+    dealership.locked_until = None
+    db.commit()
+
+    return {"message": "Senha alterada com sucesso."}
