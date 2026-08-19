@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uuid
 from pathlib import Path
-from fastapi.staticfiles import StaticFiles
+
 
 from database import get_db
 
@@ -22,23 +22,23 @@ import secrets
 from services.email import send_password_reset
 from schemas import PasswordResetRequest, PasswordResetConfirm
 from services.storage import upload_image, delete_image
+import os
 
 
 
 
 app = FastAPI(title="BusCAR API")
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[FRONTEND_URL, "http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = Path(__file__).parent / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
 
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 security = HTTPBearer()
 
