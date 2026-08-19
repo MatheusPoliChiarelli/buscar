@@ -138,6 +138,28 @@ export default function Header() {
           )}
         </div>
       </div>
+      <nav className="sm:hidden flex bg-white">
+        <Link
+          href="/"
+          className={`flex-1 text-center py-2.5 text-sm font-medium border-b-2 transition ${
+            pathname === '/' || pathname.startsWith('/veiculo')
+              ? 'border-brand-600 text-brand-700'
+              : 'border-transparent text-stone-500'
+          }`}
+        >
+          Carros
+        </Link>
+        <Link
+          href="/revendas"
+          className={`flex-1 text-center py-2.5 text-sm font-medium border-b-2 transition ${
+            pathname.startsWith('/revendas')
+              ? 'border-brand-600 text-brand-700'
+              : 'border-transparent text-stone-500'
+          }`}
+        >
+          Revendas
+        </Link>
+      </nav>
     </header>
   );
 }

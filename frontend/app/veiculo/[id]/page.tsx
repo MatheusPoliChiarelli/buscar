@@ -99,7 +99,7 @@ return (
 
       <div className="max-w-5xl mx-auto px-4 pb-6 pt-3 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:grid-rows-[auto_1fr]">
         <div className="lg:col-span-2 bg-white rounded-xl border border-brand-200 overflow-hidden">
-          <div className="h-80 bg-stone-100 relative group">
+          <div className="aspect-[16/10] sm:aspect-auto sm:h-80 bg-stone-100 relative">
             {vehicle.photos.length > 0 ? (
               <>
                 <img

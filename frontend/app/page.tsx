@@ -161,7 +161,7 @@ const modelOptions = modelGroups.map((g) => g.model);
               role="switch"
               aria-checked={!!filters.has_history_report}
               onClick={() => setFilters({ ...filters, has_history_report: !filters.has_history_report })}
-              className="flex items-center gap-2 text-sm text-stone-700 shrink-0"
+              className="hidden sm:flex items-center gap-2 text-sm text-stone-700 shrink-0"
             >
               <span
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
@@ -182,7 +182,7 @@ const modelOptions = modelGroups.map((g) => g.model);
               role="switch"
               aria-checked={!!filters.is_inspected}
               onClick={() => setFilters({ ...filters, is_inspected: !filters.is_inspected })}
-              className="flex items-center gap-2 text-sm text-stone-700 shrink-0"
+              className="hidden sm:flex items-center gap-2 text-sm text-stone-700 shrink-0"
             >
               <span
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
@@ -239,10 +239,62 @@ const modelOptions = modelGroups.map((g) => g.model);
               }}
             />
             <button
-              className="bg-brand-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-brand-700 transition shrink-0"
+              className="hidden sm:block bg-brand-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-brand-700 transition shrink-0"
               onClick={handleSearch}
             >
-              BusCAR
+              Buscar
+            </button>
+          </div>
+          <div className="sm:hidden space-y-3">
+            <div className="flex items-center gap-6">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!filters.has_history_report}
+                onClick={() => setFilters({ ...filters, has_history_report: !filters.has_history_report })}
+                className="flex items-center gap-2 text-sm text-stone-700"
+              >
+                <span
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    filters.has_history_report ? 'bg-brand-600' : 'bg-stone-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                      filters.has_history_report ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </span>
+                Histórico veicular
+              </button>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!!filters.is_inspected}
+                onClick={() => setFilters({ ...filters, is_inspected: !filters.is_inspected })}
+                className="flex items-center gap-2 text-sm text-stone-700"
+              >
+                <span
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    filters.is_inspected ? 'bg-brand-600' : 'bg-stone-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                      filters.is_inspected ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </span>
+                Vistoriado
+              </button>
+            </div>
+
+            <button
+              className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg"
+              onClick={handleSearch}
+            >
+              Buscar
             </button>
           </div>
         </div>
