@@ -284,13 +284,15 @@ async function handleDelete() {
                       Capa
                     </span>
                   )}
-                  <button
+                    <button
                     type="button"
                     onClick={() => handleRemovePhoto(photo.id)}
-                    className="absolute top-1.5 right-1.5 h-6 w-6 flex items-center justify-center rounded-full bg-stone-900/80 text-white text-base leading-none shadow hover:bg-red-600 transition"
+                    className="absolute top-1.5 right-1.5 h-6 w-6 flex items-center justify-center rounded-full bg-stone-900/80 text-white shadow hover:bg-red-600 transition"
                     aria-label="Remover foto"
                   >
-                    ×
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
                   </button>
                 </div>
               ))}

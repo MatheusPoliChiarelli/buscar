@@ -19,7 +19,7 @@ export default function MinhaRevendaPage() {
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [openingHours, setOpeningHours] = useState('');
+ 
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [address, setAddress] = useState<AddressValue>({
     zipCode: '',
@@ -49,7 +49,6 @@ export default function MinhaRevendaPage() {
       .then((data) => {
         setName(data.name);
         setPhone(formatPhone(data.phone || ''));
-        setOpeningHours(data.opening_hours || '');
         setLogoUrl(data.logo_url || null);
         setAddress({
           zipCode: data.zip_code || '',
@@ -110,8 +109,12 @@ export default function MinhaRevendaPage() {
 
 
 
-  async function handleSave() {
+async function handleSave() {
     if (!token) return;
+
+
+
+   
 
     const validHours = hours.filter((h) => h.days.length > 0 && h.open && h.close);
 
@@ -122,10 +125,14 @@ export default function MinhaRevendaPage() {
       !address.address ||
       !address.number ||
       !address.neighborhood ||
-      !address.city ||
-      !openingHours
+      !address.city
     ) {
       setError('Preencha todos os campos.');
+      return;
+    }
+
+    if (validHours.length === 0) {
+      setError('Marque pelo menos um dia no horário de funcionamento');
       return;
     }
 

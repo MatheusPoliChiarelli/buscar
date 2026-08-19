@@ -21,6 +21,7 @@ from sqlalchemy import func
 import secrets
 from services.email import send_password_reset
 from schemas import PasswordResetRequest, PasswordResetConfirm
+from services.storage import upload_image, delete_image
 
 
 
@@ -194,13 +195,15 @@ async def upload_photo(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="Arquivo muito grande. Máximo 5 MB.")
 
-    filename = f"{uuid.uuid4().hex}{extension}"
-    filepath = UPLOAD_DIR / filename
-    filepath.write_bytes(content)
+    try:
+        url = upload_image(content, "vehicles")
+    except Exception as e:
+        print(f"Erro no upload: {e}")
+        raise HTTPException(status_code=502, detail="Não foi possível enviar a imagem.")
 
     position = db.query(VehiclePhoto).filter(VehiclePhoto.vehicle_id == vehicle_id).count()
 
-    photo = VehiclePhoto(vehicle_id=vehicle_id, url=f"/uploads/{filename}", position=position)
+    photo = VehiclePhoto(vehicle_id=vehicle_id, url=url, position=position)
     db.add(photo)
     db.commit()
     db.refresh(photo)
@@ -244,14 +247,11 @@ def delete_photo(
     if not photo:
         raise HTTPException(status_code=404, detail="Foto não encontrada")
 
-    filepath = UPLOAD_DIR / Path(photo.url).name
-    if filepath.exists():
-        filepath.unlink()
+    delete_image(photo.url)
 
     db.delete(photo)
     db.commit()
     return {"status": "ok", "message": "Foto removida"}
-
 
 
 
@@ -545,15 +545,16 @@ async def upload_logo(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="Arquivo muito grande. Máximo 5 MB.")
 
+    try:
+        url = upload_image(content, "logos")
+    except Exception as e:
+        print(f"Erro no upload: {e}")
+        raise HTTPException(status_code=502, detail="Não foi possível enviar a imagem.")
+
     if dealership.logo_url:
-        old = UPLOAD_DIR / Path(dealership.logo_url).name
-        if old.exists():
-            old.unlink()
+        delete_image(dealership.logo_url)
 
-    filename = f"{uuid.uuid4().hex}{extension}"
-    (UPLOAD_DIR / filename).write_bytes(content)
-
-    dealership.logo_url = f"/uploads/{filename}"
+    dealership.logo_url = url
     db.commit()
     db.refresh(dealership)
     return dealership

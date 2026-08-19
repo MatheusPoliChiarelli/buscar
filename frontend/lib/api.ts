@@ -87,6 +87,9 @@ export type VehicleFilters = {
 };
 
 export function photoUrl(path: string): string {
+  if (path.startsWith("http")) {
+    return path;
+  }
   return `${API_URL}${path}`;
 }
 
