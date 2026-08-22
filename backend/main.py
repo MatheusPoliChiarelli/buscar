@@ -619,3 +619,8 @@ def reset_password(data: PasswordResetConfirm, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Senha alterada com sucesso."}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
