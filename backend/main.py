@@ -624,3 +624,32 @@ def reset_password(data: PasswordResetConfirm, db: Session = Depends(get_db)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/fipe/models-by-year")
+def fipe_models_by_year(brand: str, year: int, fuel: str | None = None):
+    try:
+        found = find_brand(brand)
+        if not found:
+            return []
+
+        year_id = find_year_id(found["code"], year, fuel)
+        if not year_id:
+            return []
+
+        models = get_year_models(found["code"], year_id)
+
+        grouped: dict[str, set[str]] = {}
+        for m in models:
+            name = m["name"]
+            if not name:
+                continue
+            base = name.split()[0]
+            grouped.setdefault(base, set()).add(name)
+
+        return [
+            {"model": base, "versions": sorted(versions)}
+            for base, versions in sorted(grouped.items())
+        ]
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))

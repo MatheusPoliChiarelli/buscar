@@ -426,3 +426,20 @@ export async function resetPassword(token: string, password: string): Promise<{ 
   }
   return response.json();
 }
+
+
+
+export async function listModelsByBrandAndYear(
+  brand: string,
+  year: number,
+  fuel?: string
+): Promise<FipeModelGroup[]> {
+  const params = new URLSearchParams({ brand, year: String(year) });
+  if (fuel) params.append("fuel", fuel);
+
+  const response = await fetch(`${API_URL}/fipe/models-by-year?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Erro ao carregar modelos");
+  }
+  return response.json();
+}

@@ -8,7 +8,7 @@ import { CAR_BRANDS } from '@/lib/brands';
 import {
   createVehicle,
   uploadPhoto,
-  listModelsByBrand,
+  listModelsByBrandAndYear,
   fetchFipePrice,
   type VehicleInput,
   type FipeModelGroup,
@@ -66,12 +66,15 @@ export default function AnunciarPage() {
   const { token } = useAuth();
 
   useEffect(() => {
-    if (!form.brand) {
+    const year = Number(form.year);
+    if (!form.brand || !year || year < 1900 || year > 2100) {
       setModelGroups([]);
       return;
     }
-    listModelsByBrand(form.brand).then(setModelGroups).catch(console.error);
-  }, [form.brand]);
+    listModelsByBrandAndYear(form.brand, year, form.fuel || undefined)
+      .then(setModelGroups)
+      .catch(console.error);
+  }, [form.brand, form.year, form.fuel]);
 
   useEffect(() => {
     const urls = files.map((f) => URL.createObjectURL(f));
@@ -281,13 +284,12 @@ async function handleSubmit() {
               </>
             )}
           </section>
-
           <section className="border-t border-stone-100 pt-6">
             <h2 className="text-sm font-semibold text-stone-900 mb-4">Dados do veículo</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
-              <div className="sm:col-span-2">
-                <label className={labelClass}>Marca </label>
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+              <div className="sm:col-span-3">
+                <label className={labelClass}>Marca</label>
                 <Combobox
                   placeholder="Selecione a marca"
                   value={form.brand}
@@ -296,18 +298,29 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className={labelClass}>Modelo </label>
+              <div className="sm:col-span-3">
+                <label className={labelClass}>Ano</label>
+                <input
+                  type="number"
+                  className={inputClass}
+                  placeholder="2019"
+                  value={form.year}
+                  onChange={(e) => setForm({ ...form, year: e.target.value, model: '', version: '' })}
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className={labelClass}>Modelo</label>
                 <Combobox
                   placeholder="Selecione o modelo"
                   value={form.model}
                   options={modelOptions}
-                  disabled={!form.brand}
+                  disabled={!form.brand || !form.year}
                   onChange={(v) => setForm({ ...form, model: v, version: '' })}
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-3">
                 <label className={labelClass}>Versão</label>
                 <Combobox
                   placeholder="Selecione a versão"
@@ -318,18 +331,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className={labelClass}>Ano </label>
-                <input
-                  type="number"
-                  className={inputClass}
-                  placeholder="2019"
-                  value={form.year}
-                  onChange={(e) => updateField('year', e.target.value)}
-                />
-              </div>
-
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-3">
                 <label className={labelClass}>Cor</label>
                 <input
                   className={inputClass}
@@ -339,8 +341,8 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className={labelClass}>Quilometragem </label>
+              <div className="sm:col-span-3">
+                <label className={labelClass}>Quilometragem</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -373,7 +375,7 @@ async function handleSubmit() {
                 <select
                   className={inputClass}
                   value={form.fuel}
-                  onChange={(e) => updateField('fuel', e.target.value)}
+                  onChange={(e) => setForm({ ...form, fuel: e.target.value, model: '', version: '' })}
                 >
                   <option value="">Selecione</option>
                   <option value="flex">Flex</option>

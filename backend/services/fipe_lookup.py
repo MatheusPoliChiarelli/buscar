@@ -27,7 +27,7 @@ def import_from_fipe(db: Session, brand_name: str, brand_id: str, model_search: 
 
     models = get_year_models(brand_id, year_id)
     matches = [m for m in models if model_search.lower() in m["name"].lower()]
-    print("DEBUG total de modelos:", len(models), "| matches:", len(matches))
+    print(f"DEBUG termo='{model_search}' matches={len(matches)}")
     if not matches:
         return 0
     matches = matches[:8]
@@ -115,6 +115,14 @@ def _search(
 
     if not candidates:
         return None
+
+    term_words = term.lower().split()
+    exact_word_matches = [
+        c for c in candidates
+        if all(word in c.model.lower().split() for word in term_words)
+    ]
+    if exact_word_matches:
+        candidates = exact_word_matches
 
     if transmission == "automatico":
         candidates = [c for c in candidates if is_automatic(c.model)] or candidates
