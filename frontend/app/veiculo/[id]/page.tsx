@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import VehicleDetail from './VehicleDetail';
+import VehicleJsonLd from '@/components/VehicleJsonLd';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscar-omega.vercel.app';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -11,9 +14,12 @@ type Vehicle = {
   year: number;
   mileage: number;
   price: number;
+  transmission: string | null;
+  fuel: string | null;
+  color: string | null;
   description: string | null;
   photos: { url: string }[];
-  dealership: { name: string; city: string };
+  dealership: { name: string; city: string; address?: string | null };
 };
 
 async function getVehicle(id: string): Promise<Vehicle | null> {
@@ -44,11 +50,17 @@ export async function generateMetadata({
   const { id } = await params;
   const vehicle = await getVehicle(id);
 
+
   if (!vehicle) {
     return { title: 'Anúncio não encontrado' };
   }
 
-  const name = `${vehicle.brand} ${vehicle.model}${vehicle.version ? ` ${vehicle.version}` : ''} ${vehicle.year}`;
+  const versionPart = vehicle.version && !vehicle.version.startsWith(vehicle.model)
+    ? ` ${vehicle.version}`
+    : vehicle.version
+    ? ` ${vehicle.version.replace(vehicle.model, '').trim()}`
+    : '';
+  const name = `${vehicle.brand} ${vehicle.model}${versionPart} ${vehicle.year}`;
   const title = `${name} por ${formatPrice(vehicle.price)}`;
   const description = `${name} com ${vehicle.mileage.toLocaleString('pt-BR')} km à venda em ${vehicle.dealership.city}. Anunciado por ${vehicle.dealership.name} no BusCAR.`;
   const image = vehicle.photos[0]?.url;
@@ -67,5 +79,12 @@ export async function generateMetadata({
 
 export default async function VehiclePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <VehicleDetail id={id} />;
+  const vehicle = await getVehicle(id);
+
+  return (
+    <>
+      {vehicle && <VehicleJsonLd vehicle={vehicle} siteUrl={SITE_URL} />}
+      <VehicleDetail id={id} />
+    </>
+  );
 }
