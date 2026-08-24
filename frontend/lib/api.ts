@@ -93,26 +93,35 @@ export function photoUrl(path: string): string {
   return `${API_URL}${path}`;
 }
 
-export async function listVehicles(filters: VehicleFilters = {}): Promise<Vehicle[]> {
+
+export type VehicleListResponse = {
+  items: Vehicle[];
+  total: number;
+  page: number;
+  pages: number;
+};
+
+export async function listVehicles(
+  filters: VehicleFilters = {},
+  page: number = 1
+): Promise<VehicleListResponse> {
   const params = new URLSearchParams();
 
-Object.entries(filters).forEach(([key, value]) => {
+  Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "" || value === false) {
       return;
     }
     params.append(key, String(value));
   });
 
-  const query = params.toString();
-  const url = query ? `${API_URL}/vehicles?${query}` : `${API_URL}/vehicles`;
+  params.append("page", String(page));
 
-  const response = await fetch(url);
+  const response = await fetch(`${API_URL}/vehicles?${params.toString()}`);
   if (!response.ok) {
     throw new Error("Erro ao buscar veículos");
   }
   return response.json();
 }
-
 export async function getVehicle(id: number): Promise<Vehicle> {
   const response = await fetch(`${API_URL}/vehicles/${id}`);
   if (!response.ok) {

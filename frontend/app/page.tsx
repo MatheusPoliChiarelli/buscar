@@ -67,14 +67,20 @@ export default function Home() {
   const [modelGroups, setModelGroups] = useState<FipeModelGroup[]>([]);
   const [mileageInput, setMileageInput] = useState('');
   const [priceInput, setPriceInput] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   
 
-  async function loadVehicles(activeFilters: VehicleFilters) {
+  async function loadVehicles(activeFilters: VehicleFilters, targetPage: number = 1) {
     setLoading(true);
     setError('');
     try {
-      const data = await listVehicles(activeFilters);
-      setVehicles(data);
+      const data = await listVehicles(activeFilters, targetPage);
+      setVehicles(data.items);
+      setTotalPages(data.pages);
+      setTotal(data.total);
+      setPage(data.page);
     } catch (e) {
       setError('Não foi possível carregar os anúncios.');
       console.error(e);
@@ -107,7 +113,13 @@ useEffect(() => {
 
 
   function handleSearch() {
-    loadVehicles(filters);
+    loadVehicles(filters, 1);
+  }
+
+  function goToPage(target: number) {
+    if (target < 1 || target > totalPages || target === page) return;
+    loadVehicles(filters, target);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function clearFilters() {
@@ -333,7 +345,9 @@ const modelOptions = modelGroups.map((g) => g.model);
             ))}
           </div>
         )}
+
         {error && <p className="text-red-600">{error}</p>}
+
         {!loading && !error && vehicles.length === 0 && (
           <div className="animate-fade-up flex flex-col items-center text-center py-20">
             <svg viewBox="0 -64 640 640" className="h-20 w-auto fill-brand-200 mb-1" aria-hidden="true">
@@ -343,11 +357,11 @@ const modelOptions = modelGroups.map((g) => g.model);
             <div className="w-40 border-t-2 border-dashed border-brand-200 mb-6" />
 
             <h2 className="text-lg font-semibold text-stone-900">
-              Rodamos a cidade inteira e não achamos esse carro
+              Rodamos a região inteira e não achamos esse carro
             </h2>
             <p className="text-stone-500 mt-2 max-w-md">
               Nenhum anúncio bate com todos os filtros. Tirar a versão ou ampliar a faixa de preço
-              costuma revelar boas opções que ficaram de fora por pouco...
+              costuma revelar boas opções que ficaram de fora por pouco
             </p>
 
             <button
@@ -359,66 +373,135 @@ const modelOptions = modelGroups.map((g) => g.model);
           </div>
         )}
 
+        {!loading && !error && total > 0 && (
+          <p className="text-sm text-stone-500 mb-4">
+            {total === 1 ? '1 carro encontrado' : `${total} carros encontrados`}
+          </p>
+        )}
+
         {!loading && vehicles.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {vehicles.map((vehicle, index) => (
-           <Link
-              key={vehicle.id}
-              href={`/veiculo/${vehicle.id}`}
-              style={{ animationDelay: `${index * 60}ms` }}
-              className="animate-fade-up bg-white rounded-xl border border-brand-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
-            >
-              <div className="h-44 bg-stone-100">
-                {vehicle.photos.length > 0 ? (
-                  <img
-                    src={photoUrl(vehicle.photos[0].url)}
-                    alt={`${vehicle.brand} ${vehicle.model}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">
-                    Sem foto
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-stone-900">
-                    {vehicle.brand} {vehicle.model}
-                  </p>
-
-                  {vehicle.fipe_price && (
-                    <span
-                      className={`shrink-0 text-[14px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md border ${
-                        vehicle.price <= vehicle.fipe_price
-                          ? 'border-money-600/30 text-money-700 bg-money-600/5'
-                          : 'border-brand-500/30 text-brand-700 bg-brand-500/5'
-                      }`}
-                    >
-                      FIPE {formatPrice(vehicle.fipe_price)}
-                    </span>
+              <Link
+                key={vehicle.id}
+                href={`/veiculo/${vehicle.id}`}
+                style={{ animationDelay: `${index * 60}ms` }}
+                className="animate-fade-up bg-white rounded-xl border border-brand-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
+              >
+                <div className="h-44 bg-stone-100">
+                  {vehicle.photos.length > 0 ? (
+                    <img
+                      src={photoUrl(vehicle.photos[0].url)}
+                      alt={`${vehicle.brand} ${vehicle.model}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-400 text-sm">
+                      Sem foto
+                    </div>
                   )}
                 </div>
 
-                <p className="text-sm text-stone-500">
-                  {vehicle.version || '—'} · {vehicle.year}
-                </p>
+                <div className="p-4 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-stone-900">
+                      {vehicle.brand} {vehicle.model}
+                    </p>
 
-                <p className="text-2xl font-bold text-money-700 mt-2">
-                  {formatPrice(vehicle.price)}
-                </p>
+                    {vehicle.fipe_price && (
+                      <span
+                        className={`shrink-0 text-[13px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md border ${
+                          vehicle.price <= vehicle.fipe_price
+                            ? 'border-money-600/30 text-money-700 bg-money-600/5'
+                            : 'border-brand-500/30 text-brand-700 bg-brand-500/5'
+                        }`}
+                      >
+                        FIPE {formatPrice(vehicle.fipe_price)}
+                      </span>
+                    )}
+                  </div>
 
-                <p className="text-sm text-stone-500 mt-1">
-                  {formatMileage(vehicle.mileage)} · {formatTransmission(vehicle.transmission)} · {formatFuel(vehicle.fuel)}
-                </p>
-              </div>
+                  <p className="text-sm text-stone-500">
+                    {vehicle.version || '—'} · {vehicle.year}
+                  </p>
 
-              <div className="bg-brand-600 px-4 py-2.5 rounded-b-xl">
-                <p className="text-xs font-medium text-white">{vehicle.dealership.name}</p>
-              </div>
-            </Link>
-          ))}
+                  <p className="text-2xl font-bold text-money-700 mt-2">
+                    {formatPrice(vehicle.price)}
+                  </p>
+
+                  <p className="text-sm text-stone-500 mt-1">
+                    {formatMileage(vehicle.mileage)} · {formatTransmission(vehicle.transmission)} ·{' '}
+                    {formatFuel(vehicle.fuel)}
+                  </p>
+                </div>
+
+                <div className="bg-brand-600 px-4 py-2.5 rounded-b-xl">
+                  <p className="text-xs font-medium text-white">{vehicle.dealership.name}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {!loading && totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-10">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page === 1}
+              className="h-10 px-4 flex items-center gap-1.5 rounded-lg border border-brand-200 bg-white text-sm font-medium text-stone-700 hover:border-brand-400 hover:text-brand-700 transition disabled:opacity-40"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Anterior
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+              .map((n, index, array) => (
+                <span key={n} className="flex items-center gap-2">
+                  {index > 0 && array[index - 1] !== n - 1 && (
+                    <span className="text-stone-400 px-1">...</span>
+                  )}
+                  <button
+                    onClick={() => goToPage(n)}
+                    className={`h-10 w-10 rounded-lg text-sm font-medium transition ${
+                      n === page
+                        ? 'bg-brand-600 text-white shadow-sm'
+                        : 'border border-brand-200 bg-white text-stone-700 hover:border-brand-400 hover:text-brand-700'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                </span>
+              ))}
+
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page === totalPages}
+              className="h-10 px-4 flex items-center gap-1.5 rounded-lg border border-brand-200 bg-white text-sm font-medium text-stone-700 hover:border-brand-400 hover:text-brand-700 transition disabled:opacity-40"
+            >
+              Próxima
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
           </div>
         )}
       </section>

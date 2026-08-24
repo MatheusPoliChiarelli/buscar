@@ -24,10 +24,10 @@ export default function PrivacidadePage() {
               O BusCAR é operado por Matheus Poli Chiarelli, pessoa física, em Ribeirão Preto - SP.
               Para qualquer assunto relacionado a privacidade, o contato é{' '}
               <a
-                href="mailto:buscarribeiraopreto@gmail.com"
+                href="mailto:buscarribeirao@gmail.com"
                 className="font-medium text-brand-700 hover:underline"
               >
-                buscarribeiraopreto@gmail.com
+                buscarribeirao@gmail.com
               </a>
             </p>
           </section>
@@ -139,10 +139,10 @@ export default function PrivacidadePage() {
               Boa parte disso está disponível diretamente na plataforma: a revenda pode editar seus
               dados e remover anúncios a qualquer momento. Para os demais pedidos, escreva para{' '}
               <a
-                href="mailto:buscarribeiraopreto@gmail.com"
+                href="mailto:buscarribeirao@gmail.com"
                 className="font-medium text-brand-700 hover:underline"
               >
-                buscarribeiraopreto@gmail.com
+                buscarribeirao@gmail.com
               </a>{' '}
               e responderemos em até 15 dias
             </p>

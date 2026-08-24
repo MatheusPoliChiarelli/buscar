@@ -8,7 +8,7 @@ from pathlib import Path
 from database import get_db
 
 from models_db import Vehicle, Dealership, VehiclePhoto
-from schemas import VehicleCreate, VehicleOut, PhotoOut, VehicleUpdate
+from schemas import VehicleCreate, VehicleOut, PhotoOut, VehicleUpdate, VehicleListOut
 from services.fipe_lookup import lookup_fipe_price
 from services.fipe import get_brands, get_brand_years, get_year_models, get_brand_models, find_year_id, find_brand
 from services.auth import hash_password, verify_password, create_access_token
@@ -33,7 +33,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:3000"],
+    allow_origins=[FRONTEND_URL, "https://buscar-omega.vercel.app", "http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -65,7 +65,7 @@ def get_current_dealership(
 def read_root():
     return {"status": "ok", "service": "BusCAR API"}
 
-@app.get("/vehicles", response_model=list[VehicleOut])
+@app.get("/vehicles", response_model=VehicleListOut)
 def list_vehicles(
     brand: str | None = None,
     model: str | None = None,
@@ -79,6 +79,8 @@ def list_vehicles(
     city: str | None = None,
     has_history_report: bool | None = None,
     is_inspected: bool | None = None,
+    page: int = 1,
+    limit: int = 12,
     db: Session = Depends(get_db)
 ):
     query = db.query(Vehicle).filter(Vehicle.active == True)
@@ -108,7 +110,20 @@ def list_vehicles(
     if is_inspected:
         query = query.filter(Vehicle.is_inspected == True)
 
-    return query.order_by(Vehicle.created_at.desc()).all()
+    total = query.count()
+
+    page = max(1, page)
+    limit = min(max(1, limit), 48)
+    pages = max(1, (total + limit - 1) // limit)
+
+    items = (
+        query.order_by(Vehicle.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+
+    return {"items": items, "total": total, "page": page, "pages": pages}
 
 
 @app.get("/vehicles/facets")

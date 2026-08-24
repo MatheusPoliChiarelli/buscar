@@ -15,11 +15,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [vehiclesRes, dealershipsRes] = await Promise.all([
-      fetch(`${API_URL}/vehicles`, { next: { revalidate: 3600 } }),
+      fetch(`${API_URL}/vehicles?limit=48`, { next: { revalidate: 3600 } }),
       fetch(`${API_URL}/dealerships`, { next: { revalidate: 3600 } }),
     ]);
 
-    const vehicles = vehiclesRes.ok ? await vehiclesRes.json() : [];
+    const vehiclesData = vehiclesRes.ok ? await vehiclesRes.json() : { items: [] };
+    const vehicles = vehiclesData.items || [];
     const dealerships = dealershipsRes.ok ? await dealershipsRes.json() : [];
 
     const vehiclePages: MetadataRoute.Sitemap = vehicles.map((v: { id: number; created_at: string }) => ({

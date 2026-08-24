@@ -24,10 +24,10 @@ export default function TermosPage() {
               O BusCAR é operado por Matheus Poli Chiarelli, pessoa física, em Ribeirão Preto - SP.
               Contato:{' '}
               <a
-                href="mailto:buscarribeiraopreto@gmail.com"
+                href="mailto:buscarribeirao@gmail.com"
                 className="font-medium text-brand-700 hover:underline"
               >
-                buscarribeiraopreto@gmail.com
+                buscarribeirao@gmail.com
               </a>
             </p>
           </section>

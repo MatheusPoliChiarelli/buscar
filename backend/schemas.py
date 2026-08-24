@@ -137,3 +137,10 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str
     password: str
+
+
+class VehicleListOut(BaseModel):
+    items: list[VehicleOut]
+    total: int
+    page: int
+    pages: int
