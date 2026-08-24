@@ -33,7 +33,12 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "https://buscar-omega.vercel.app", "http://localhost:3000"],
+    allow_origins=[
+    FRONTEND_URL,
+    "https://www.buscarrp.com.br",
+    "https://buscar-omega.vercel.app",
+    "http://localhost:3000",
+],
     allow_methods=["*"],
     allow_headers=["*"],
 )
