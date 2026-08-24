@@ -14,10 +14,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://buscar-omega.vercel.app';
+
 export const metadata: Metadata = {
-  title: "BusCAR — Carros em Ribeirão Preto e região",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'BusCAR — Carros em Ribeirão Preto',
+    template: '%s — BusCAR',
+  },
   description:
-    "Marketplace de carros usados com preço comparado à Tabela FIPE. Encontre seu próximo carro em Ribeirão Preto e região.",
+    'Encontre seu próximo carro em Ribeirão Preto. Todo anúncio mostra o preço comparado à Tabela FIPE.',
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'BusCAR',
+    title: 'BusCAR — Carros em Ribeirão Preto',
+    description:
+      'Encontre seu próximo carro em Ribeirão Preto. Todo anúncio mostra o preço comparado à Tabela FIPE.',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
