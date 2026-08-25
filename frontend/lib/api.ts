@@ -494,12 +494,16 @@ export type ReportData = {
   current: {
     vehicle_views: number;
     whatsapp_clicks: number;
+    vehicle_clicks: number;
+    dealership_clicks: number;
     dealership_views: number;
     search_impressions: number;
   };
   previous: {
     vehicle_views: number;
     whatsapp_clicks: number;
+    vehicle_clicks: number;
+    dealership_clicks: number;
     dealership_views: number;
     search_impressions: number;
   };

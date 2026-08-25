@@ -258,6 +258,20 @@ export default function VehicleDetail({ id }: { id: string }) {
               Falar no WhatsApp
             </a>
           )}
+
+
+          <Link
+            href={`/revendas/${vehicle.dealership.id}`}
+            className="flex items-center justify-center gap-2.5 bg-brand-600 text-white font-semibold px-4 py-3.5 rounded-lg mt-3 shadow-sm hover:bg-brand-700 hover:shadow-md transition-all duration-200"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l1-5h16l1 5" />
+              <path d="M4 9v11h16V9" />
+              <path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0" />
+              <path d="M9 20v-6h6v6" />
+            </svg>
+            Ver a Revenda
+          </Link>
         </div>
       </div>
 

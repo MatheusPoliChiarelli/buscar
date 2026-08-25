@@ -729,9 +729,24 @@ def get_reports(
             query = query.filter(Event.created_at < end)
         return query.scalar() or 0
 
+    def count_clicks(start, end=None, from_vehicle=True):
+        query = db.query(func.count(Event.id)).filter(
+            Event.dealership_id == dealership.id,
+            Event.event_type == "whatsapp_click",
+            Event.created_at >= start,
+        )
+        query = query.filter(
+            Event.vehicle_id.isnot(None) if from_vehicle else Event.vehicle_id.is_(None)
+        )
+        if end:
+            query = query.filter(Event.created_at < end)
+        return query.scalar() or 0
+
     current = {
         "vehicle_views": count_events("vehicle_view", since),
         "whatsapp_clicks": count_events("whatsapp_click", since),
+        "vehicle_clicks": count_clicks(since, from_vehicle=True),
+        "dealership_clicks": count_clicks(since, from_vehicle=False),
         "dealership_views": count_events("dealership_view", since),
         "search_impressions": count_events("search_impression", since),
     }
@@ -739,6 +754,8 @@ def get_reports(
     previous = {
         "vehicle_views": count_events("vehicle_view", previous_since, since),
         "whatsapp_clicks": count_events("whatsapp_click", previous_since, since),
+        "vehicle_clicks": count_clicks(previous_since, since, from_vehicle=True),
+        "dealership_clicks": count_clicks(previous_since, since, from_vehicle=False),
         "dealership_views": count_events("dealership_view", previous_since, since),
         "search_impressions": count_events("search_impression", previous_since, since),
     }

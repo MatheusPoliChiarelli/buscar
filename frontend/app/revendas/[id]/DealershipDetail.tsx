@@ -87,9 +87,9 @@ export default function DealershipDetail({ id }: { id: string }) {
     );
   }
 
-  const whatsappLink = dealership.phone
+    const whatsappLink = dealership.phone
     ? `https://wa.me/55${dealership.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-        `Olá! Vi os anúncios da ${dealership.name} no BusCAR.`
+        `Olá! Encontrei a ${dealership.name} no BusCAR e gostaria de saber mais sobre os carros disponíveis`
       )}`
     : null;
 
