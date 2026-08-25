@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { getVehicle, photoUrl, type Vehicle } from '@/lib/api';
+import { getVehicle, photoUrl, trackEvent, type Vehicle } from '@/lib/api';
 
 const FUEL_LABELS: Record<string, string> = {
   gasolina: 'Gasolina',
@@ -49,6 +49,12 @@ export default function VehicleDetail({ id }: { id: string }) {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (vehicle) {
+      trackEvent('vehicle_view', vehicle.dealership.id, vehicle.id);
+    }
+  }, [vehicle]);
 
   if (loading) {
     return (
@@ -239,10 +245,11 @@ export default function VehicleDetail({ id }: { id: string }) {
           <p className="text-sm text-stone-500">{vehicle.dealership.city}</p>
 
           {whatsappLink && (
-            <a
+            <a        
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent('whatsapp_click', vehicle.dealership.id, vehicle.id)}
               className="flex items-center justify-center gap-2.5 bg-money-600 text-white font-semibold px-4 py-3.5 rounded-lg mt-4 shadow-sm hover:bg-money-700 hover:shadow-md transition-all duration-200"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">

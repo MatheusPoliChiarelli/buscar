@@ -452,3 +452,78 @@ export async function listModelsByBrandAndYear(
   }
   return response.json();
 }
+
+export type EventType =
+  | 'vehicle_view'
+  | 'whatsapp_click'
+  | 'dealership_view'
+  | 'search_impression';
+
+function getSessionId(): string {
+  if (typeof window === 'undefined') return '';
+
+  let id = sessionStorage.getItem('buscar-session');
+  if (!id) {
+    id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem('buscar-session', id);
+  }
+  return id;
+}
+
+export function trackEvent(
+  eventType: EventType,
+  dealershipId: number,
+  vehicleId?: number
+): void {
+  fetch(`${API_URL}/events`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event_type: eventType,
+      dealership_id: dealershipId,
+      vehicle_id: vehicleId,
+      session_id: getSessionId(),
+    }),
+  }).catch(() => {
+    // falha em métrica nunca deve atrapalhar o usuário
+  });
+}
+
+export type ReportData = {
+  period_days: number;
+  current: {
+    vehicle_views: number;
+    whatsapp_clicks: number;
+    dealership_views: number;
+    search_impressions: number;
+  };
+  previous: {
+    vehicle_views: number;
+    whatsapp_clicks: number;
+    dealership_views: number;
+    search_impressions: number;
+  };
+  active_vehicles: number;
+  vehicles: {
+    id: number;
+    brand: string;
+    model: string;
+    version: string | null;
+    year: number;
+    price: number;
+    active: boolean;
+    views: number;
+    clicks: number;
+  }[];
+  daily: { day: string; views: number; clicks: number }[];
+};
+
+export async function getReports(token: string, days: number = 30): Promise<ReportData> {
+  const response = await fetch(`${API_URL}/reports?days=${days}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error('Erro ao carregar relatórios');
+  }
+  return response.json();
+}

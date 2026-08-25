@@ -4,14 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import DealershipAvatar from '@/components/DealershipAvatar';
-import {
-  getDealership,
-  listDealershipVehicles,
-  photoUrl,
-  type Dealership,
-  type Vehicle,
-} from '@/lib/api';
+import { getDealership, listDealershipVehicles, photoUrl, trackEvent, type Dealership, type Vehicle } from '@/lib/api';
 import { formatHours } from '@/lib/hours';
+
 
 const FUEL_LABELS: Record<string, string> = {
   gasolina: 'Gasolina',
@@ -62,6 +57,12 @@ export default function DealershipDetail({ id }: { id: string }) {
       .catch(() => setError('Revenda não encontrada.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (dealership) {
+      trackEvent('dealership_view', Number(id));
+    }
+  }, [dealership, id]);
 
   if (loading) {
     return (
@@ -140,6 +141,7 @@ export default function DealershipDetail({ id }: { id: string }) {
                 href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent('whatsapp_click', Number(id))}
                 className="flex items-center justify-center gap-2.5 bg-money-600 text-white font-semibold px-5 py-3 rounded-lg shadow-sm hover:bg-money-700 hover:shadow-md transition-all"
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">

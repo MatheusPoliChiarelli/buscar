@@ -144,3 +144,10 @@ class VehicleListOut(BaseModel):
     total: int
     page: int
     pages: int
+
+
+class EventCreate(BaseModel):
+    event_type: str
+    vehicle_id: int | None = None
+    dealership_id: int
+    session_id: str | None = None

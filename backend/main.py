@@ -3,16 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uuid
 from pathlib import Path
+from sqlalchemy import func, case
 
 
 from database import get_db
 
-from models_db import Vehicle, Dealership, VehiclePhoto
+from models_db import Vehicle, Dealership, VehiclePhoto, Event
 from schemas import VehicleCreate, VehicleOut, PhotoOut, VehicleUpdate, VehicleListOut
 from services.fipe_lookup import lookup_fipe_price
 from services.fipe import get_brands, get_brand_years, get_year_models, get_brand_models, find_year_id, find_brand
 from services.auth import hash_password, verify_password, create_access_token
-from schemas import DealershipRegister, DealershipLogin, TokenOut
+from schemas import DealershipRegister, DealershipLogin, TokenOut, EventCreate
 from services.auth import decode_access_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from schemas import DealershipUpdate
@@ -23,6 +24,7 @@ from services.email import send_password_reset
 from schemas import PasswordResetRequest, PasswordResetConfirm
 from services.storage import upload_image, delete_image
 import os
+from sqlalchemy import text
 
 
 
@@ -673,3 +675,135 @@ def fipe_models_by_year(brand: str, year: int, fuel: str | None = None):
         ]
     except ValueError as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+VALID_EVENT_TYPES = {"vehicle_view", "whatsapp_click", "dealership_view", "search_impression"}
+
+
+@app.post("/events")
+def create_event(data: EventCreate, db: Session = Depends(get_db)):
+    if data.event_type not in VALID_EVENT_TYPES:
+        raise HTTPException(status_code=400, detail="Tipo de evento inválido")
+
+    dealership = db.query(Dealership).filter(Dealership.id == data.dealership_id).first()
+    if not dealership:
+        raise HTTPException(status_code=404, detail="Revenda não encontrada")
+
+    if data.session_id and data.vehicle_id:
+        existing = db.query(Event).filter(
+            Event.session_id == data.session_id,
+            Event.vehicle_id == data.vehicle_id,
+            Event.event_type == data.event_type,
+            Event.created_at > text("NOW() - INTERVAL '1 hour'"),
+        ).first()
+        if existing:
+            return {"status": "ok", "duplicate": True}
+
+    event = Event(
+        event_type=data.event_type,
+        vehicle_id=data.vehicle_id,
+        dealership_id=data.dealership_id,
+        session_id=data.session_id,
+    )
+    db.add(event)
+    db.commit()
+    return {"status": "ok"}
+
+
+@app.get("/reports")
+def get_reports(
+    days: int = 30,
+    dealership: Dealership = Depends(get_current_dealership),
+    db: Session = Depends(get_db),
+):
+    days = min(max(days, 1), 365)
+    since = datetime.utcnow() - timedelta(days=days)
+    previous_since = since - timedelta(days=days)
+
+    def count_events(event_type: str, start, end=None):
+        query = db.query(func.count(Event.id)).filter(
+            Event.dealership_id == dealership.id,
+            Event.event_type == event_type,
+            Event.created_at >= start,
+        )
+        if end:
+            query = query.filter(Event.created_at < end)
+        return query.scalar() or 0
+
+    current = {
+        "vehicle_views": count_events("vehicle_view", since),
+        "whatsapp_clicks": count_events("whatsapp_click", since),
+        "dealership_views": count_events("dealership_view", since),
+        "search_impressions": count_events("search_impression", since),
+    }
+
+    previous = {
+        "vehicle_views": count_events("vehicle_view", previous_since, since),
+        "whatsapp_clicks": count_events("whatsapp_click", previous_since, since),
+        "dealership_views": count_events("dealership_view", previous_since, since),
+        "search_impressions": count_events("search_impression", previous_since, since),
+    }
+
+    per_vehicle = (
+        db.query(
+            Vehicle.id,
+            Vehicle.brand,
+            Vehicle.model,
+            Vehicle.version,
+            Vehicle.year,
+            Vehicle.price,
+            Vehicle.active,
+            func.count(case((Event.event_type == "vehicle_view", 1))).label("views"),
+            func.count(case((Event.event_type == "whatsapp_click", 1))).label("clicks"),
+        )
+        .outerjoin(
+            Event,
+            (Event.vehicle_id == Vehicle.id) & (Event.created_at >= since),
+        )
+        .filter(Vehicle.dealership_id == dealership.id)
+        .group_by(Vehicle.id)
+        .order_by(func.count(case((Event.event_type == "vehicle_view", 1))).desc())
+        .all()
+    )
+
+    daily = (
+        db.query(
+            func.date(Event.created_at).label("day"),
+            func.count(case((Event.event_type == "vehicle_view", 1))).label("views"),
+            func.count(case((Event.event_type == "whatsapp_click", 1))).label("clicks"),
+        )
+        .filter(Event.dealership_id == dealership.id, Event.created_at >= since)
+        .group_by(func.date(Event.created_at))
+        .order_by(func.date(Event.created_at))
+        .all()
+    )
+
+    active_count = (
+        db.query(func.count(Vehicle.id))
+        .filter(Vehicle.dealership_id == dealership.id, Vehicle.active == True)
+        .scalar()
+        or 0
+    )
+
+    return {
+        "period_days": days,
+        "current": current,
+        "previous": previous,
+        "active_vehicles": active_count,
+        "vehicles": [
+            {
+                "id": v.id,
+                "brand": v.brand,
+                "model": v.model,
+                "version": v.version,
+                "year": v.year,
+                "price": v.price,
+                "active": v.active,
+                "views": v.views,
+                "clicks": v.clicks,
+            }
+            for v in per_vehicle
+        ],
+        "daily": [
+            {"day": str(d.day), "views": d.views, "clicks": d.clicks} for d in daily
+        ],
+    }

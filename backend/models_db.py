@@ -104,3 +104,19 @@ class FipeImport(Base):
     __table_args__ = (
         Index("idx_fipe_import", "brand", "model", "year", unique=True),
     )
+
+
+class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True)
+    event_type = Column(String(30), nullable=False)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"))
+    dealership_id = Column(Integer, ForeignKey("dealerships.id"), nullable=False)
+    session_id = Column(String(64))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("idx_event_dealership", "dealership_id", "created_at"),
+        Index("idx_event_vehicle", "vehicle_id", "event_type"),
+    )
