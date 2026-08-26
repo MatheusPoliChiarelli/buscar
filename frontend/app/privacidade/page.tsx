@@ -51,10 +51,17 @@ export default function PrivacidadePage() {
             <h3 className="text-sm font-semibold text-stone-900 uppercase tracking-wide mt-5">
               De quem navega
             </h3>
-            <p className="text-stone-700 leading-relaxed mt-2">
+              <p className="text-stone-700 leading-relaxed mt-2">
               Para buscar carros e ver anúncios, não é preciso criar conta nem informar dados
-              pessoais. Coletamos apenas informações técnicas de navegação, como páginas visitadas e
-              tipo de dispositivo, por meio de ferramentas de análise de tráfego
+              pessoais. Registramos apenas informações de uso da plataforma: quais anúncios foram
+              abertos, quando alguém clica para falar com uma revenda, e quais páginas de loja foram
+              visitadas
+            </p>
+            <p className="text-stone-700 leading-relaxed mt-2">
+              Esses registros usam um identificador aleatório de sessão, que é gerado no seu
+              navegador, não identifica você e é descartado ao fechar a aba. Os dados são
+              apresentados às revendas apenas de forma agregada, em forma de números totais, sem
+              qualquer informação sobre quem visitou
             </p>
           </section>
 
@@ -66,6 +73,7 @@ export default function PrivacidadePage() {
               <li>Autenticar o acesso da revenda à sua conta</li>
               <li>Enviar e-mails necessários ao funcionamento, como redefinição de senha</li>
               <li>Entender como a plataforma é usada e melhorá-la</li>
+              <li>Mostrar às revendas quantas pessoas viram seus anúncios e quantas entraram em contato</li>
             </ul>
             <p className="text-stone-700 leading-relaxed mt-3">
               O tratamento se baseia na execução do serviço solicitado pela revenda e no legítimo

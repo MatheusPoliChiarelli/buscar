@@ -56,10 +56,10 @@ const filtered = dealerships.filter((d) => {
 
             <section className="bg-brand-600 text-white border-t-2 border-white/25">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl xs:text-[1.4rem] md:text-[1.7rem] lg:text-3xl font-bold tracking-tight">
             Revendas de Ribeirão Preto
           </h1>
-          <p className="text-brand-100 mt-1.5 max-w-4xl">
+          <p className="text-brand-100 mt-1.5 max-w-4xl text-sm xs:text-[0.75rem] md:text-[0.9rem] lg:text-base">
             Conheça as lojas que anunciam no BusCAR, veja os anúncios de cada uma e fale diretamente com
             elas
           </p>

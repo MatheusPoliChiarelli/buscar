@@ -145,10 +145,10 @@ const modelOptions = modelGroups.map((g) => g.model);
 
       <section className="bg-brand-600 text-white border-t-2 border-white/25">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl xs:text-[1.4rem] md:text-[1.7rem] lg:text-3xl font-bold tracking-tight">
             Encontre seu próximo carro em Ribeirão Preto
           </h1>
-          <p className="text-brand-100 mt-1.5 max-w-4xl">
+          <p className="text-brand-100 mt-1.5 max-w-4xl text-sm xs:text-[0.75rem] md:text-[0.9rem] lg:text-base">
             Todo anúncio mostra o preço comparado à Tabela FIPE, para você saber na hora se está
             pagando um valor justo
           </p>
@@ -157,36 +157,42 @@ const modelOptions = modelGroups.map((g) => g.model);
 
       <section className="max-w-6xl mx-auto px-4 py-6">
         <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <Combobox
-              placeholder="Marca"
-              value={filters.brand || ''}
-              options={brandOptions}
-              onChange={(v) => setFilters({ ...filters, brand: v, model: undefined, version: undefined })}
-            />
+            <div className="grid grid-cols-1 xs:grid-cols-3 lg:grid-cols-5 items-center gap-3">
+            <div className="w-full">
+              <Combobox
+                placeholder="Marca"
+                value={filters.brand || ''}
+                options={brandOptions}
+                onChange={(v) => setFilters({ ...filters, brand: v, model: undefined, version: undefined })}
+              />
+            </div>
 
-            <Combobox
-              placeholder="Modelo"
-              value={filters.model || ''}
-              options={modelOptions}
-              disabled={!filters.brand}
-              onChange={(v) => setFilters({ ...filters, model: v, version: undefined })}
-            />
+            <div className="w-full">
+              <Combobox
+                placeholder="Modelo"
+                value={filters.model || ''}
+                options={modelOptions}
+                disabled={!filters.brand}
+                onChange={(v) => setFilters({ ...filters, model: v, version: undefined })}
+              />
+            </div>
 
-            <Combobox
-              placeholder="Versão"
-              value={filters.version || ''}
-              options={versionOptions}
-              disabled={!filters.model}
-              onChange={(v) => setFilters({ ...filters, version: v })}
-            />
+            <div className="w-full">
+              <Combobox
+                placeholder="Versão"
+                value={filters.version || ''}
+                options={versionOptions}
+                disabled={!filters.model}
+                onChange={(v) => setFilters({ ...filters, version: v })}
+              />
+            </div>
 
             <button
               type="button"
               role="switch"
               aria-checked={!!filters.has_history_report}
               onClick={() => setFilters({ ...filters, has_history_report: !filters.has_history_report })}
-              className="hidden sm:flex items-center gap-2 text-sm text-stone-700 shrink-0"
+              className="hidden lg:flex items-center gap-2 text-sm text-stone-700 shrink-0"
             >
               <span
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
@@ -207,7 +213,7 @@ const modelOptions = modelGroups.map((g) => g.model);
               role="switch"
               aria-checked={!!filters.is_inspected}
               onClick={() => setFilters({ ...filters, is_inspected: !filters.is_inspected })}
-              className="hidden sm:flex items-center gap-2 text-sm text-stone-700 shrink-0"
+              className="hidden lg:flex items-center gap-2 text-sm text-stone-700 shrink-0"
             >
               <span
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
@@ -224,23 +230,23 @@ const modelOptions = modelGroups.map((g) => g.model);
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-3 lg:grid-cols-5 items-center gap-3">
             <input
-              className="border border-brand-200 rounded-lg px-3 py-2 flex-1 min-w-28 focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="border border-brand-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
               type="number"
               placeholder="Ano mínimo"
               value={filters.min_year || ''}
               onChange={(e) => setFilters({ ...filters, min_year: e.target.value ? Number(e.target.value) : undefined })}
             />
             <input
-              className="border border-brand-200 rounded-lg px-3 py-2 flex-1 min-w-28 focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="border border-brand-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
               type="number"
               placeholder="Ano máximo"
               value={filters.max_year || ''}
               onChange={(e) => setFilters({ ...filters, max_year: e.target.value ? Number(e.target.value) : undefined })}
             />
             <input
-              className="border border-brand-200 rounded-lg px-3 py-2 flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="border border-brand-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
               type="text"
               inputMode="numeric"
               placeholder="Km máximo"
@@ -252,7 +258,7 @@ const modelOptions = modelGroups.map((g) => g.model);
               }}
             />
             <input
-              className="border border-brand-200 rounded-lg px-3 py-2 flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="border border-brand-200 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-brand-400"
               type="text"
               inputMode="numeric"
               placeholder="Preço máximo"
@@ -263,15 +269,58 @@ const modelOptions = modelGroups.map((g) => g.model);
                 setFilters({ ...filters, max_price: digits ? Number(digits) : undefined });
               }}
             />
+
             <button
-              className="hidden sm:block bg-brand-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-brand-700 transition shrink-0"
+              type="button"
+              role="switch"
+              aria-checked={!!filters.has_history_report}
+              onClick={() => setFilters({ ...filters, has_history_report: !filters.has_history_report })}
+              className="hidden xs:flex lg:hidden items-center gap-2 text-sm text-stone-700"
+            >
+              <span
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  filters.has_history_report ? 'bg-brand-600' : 'bg-stone-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                    filters.has_history_report ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </span>
+              Histórico veicular
+            </button>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!filters.is_inspected}
+              onClick={() => setFilters({ ...filters, is_inspected: !filters.is_inspected })}
+              className="hidden xs:flex lg:hidden items-center gap-2 text-sm text-stone-700"
+            >
+              <span
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                  filters.is_inspected ? 'bg-brand-600' : 'bg-stone-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                    filters.is_inspected ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </span>
+              Vistoriado
+            </button>
+
+            <button
+              className="hidden lg:block bg-brand-600 text-white font-medium px-6 py-2 rounded-lg hover:bg-brand-700 transition"
               onClick={handleSearch}
             >
-              Buscar
+              BusCAR
             </button>
           </div>
-          <div className="sm:hidden space-y-3">
-            <div className="flex items-center gap-6">
+          <div className="lg:hidden space-y-3">
+            <div className="xs:hidden flex items-center gap-6">
               <button
                 type="button"
                 role="switch"
@@ -290,7 +339,8 @@ const modelOptions = modelGroups.map((g) => g.model);
                     }`}
                   />
                 </span>
-                Histórico veicular
+                <span className="min-[400px]:hidden">Histórico</span>
+                <span className="hidden min-[400px]:inline">Histórico veicular</span>
               </button>
 
               <button
@@ -319,7 +369,7 @@ const modelOptions = modelGroups.map((g) => g.model);
               className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg"
               onClick={handleSearch}
             >
-              Buscar
+              BusCAR
             </button>
           </div>
         </div>
@@ -327,7 +377,7 @@ const modelOptions = modelGroups.map((g) => g.model);
 
       <section className="max-w-6xl mx-auto px-4 pb-12">
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-5">
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
@@ -380,7 +430,7 @@ const modelOptions = modelGroups.map((g) => g.model);
         )}
 
         {!loading && vehicles.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-5">
             {vehicles.map((vehicle, index) => (
               <Link
                 key={vehicle.id}
@@ -444,11 +494,11 @@ const modelOptions = modelGroups.map((g) => g.model);
         )}
 
         {!loading && totalPages > 1 && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-10">
+                    <div className="flex flex-wrap items-center justify-center gap-1 xs:gap-2 mt-10">
             <button
               onClick={() => goToPage(page - 1)}
               disabled={page === 1}
-              className="h-10 px-4 flex items-center gap-1.5 rounded-lg border border-brand-200 bg-white text-sm font-medium text-stone-700 hover:border-brand-400 hover:text-brand-700 transition disabled:opacity-40"
+              className="h-10 px-2 sm:px-4 flex items-center gap-1 xs:gap-1.5 rounded-lg border border-brand-200 bg-white text-sm font-medium text-stone-700 hover:border-brand-400 hover:text-brand-700 transition disabled:opacity-40"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -461,7 +511,7 @@ const modelOptions = modelGroups.map((g) => g.model);
               >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
-              Anterior
+              <span className="text-xs sm:text-sm">Anterior</span>
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -487,9 +537,9 @@ const modelOptions = modelGroups.map((g) => g.model);
             <button
               onClick={() => goToPage(page + 1)}
               disabled={page === totalPages}
-              className="h-10 px-4 flex items-center gap-1.5 rounded-lg border border-brand-200 bg-white text-sm font-medium text-stone-700 hover:border-brand-400 hover:text-brand-700 transition disabled:opacity-40"
+              className="h-10 px-2 xs:px-4 flex items-center gap-1 xs:gap-1.5 rounded-lg border border-brand-200 bg-white text-sm font-medium text-stone-700 hover:border-brand-400 hover:text-brand-700 transition disabled:opacity-40"
             >
-              Próxima
+              <span className="text-xs sm:text-sm">Próxima</span>
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4"

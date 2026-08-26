@@ -115,6 +115,14 @@ export default function Header() {
                     Novo anúncio
                   </Link>
 
+                                    <Link
+                    href="/relatorios"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-stone-700 hover:bg-brand-500 hover:text-white transition"
+                  >
+                    Relatórios
+                  </Link>
+
                   <button
                     onClick={() => {
                       setOpen(false);

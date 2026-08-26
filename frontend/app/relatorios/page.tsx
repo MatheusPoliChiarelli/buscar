@@ -186,7 +186,7 @@ export default function RelatoriosPage() {
           </div>
         )}
 
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+<div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
             <MetricCard
             label="Visualizações"
             value={data.current.vehicle_views}

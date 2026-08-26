@@ -118,7 +118,7 @@ export default function MeusAnunciosPage() {
         )}
 
         {vehicles.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
             {vehicles.map((vehicle, index) => (
               <Link
                 key={vehicle.id}

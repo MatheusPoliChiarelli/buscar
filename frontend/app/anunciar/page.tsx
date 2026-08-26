@@ -287,8 +287,8 @@ async function handleSubmit() {
           <section className="border-t border-stone-100 pt-6">
             <h2 className="text-sm font-semibold text-stone-900 mb-4">Dados do veículo</h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-              <div className="sm:col-span-3">
+              <div className="grid grid-cols-1 xs:grid-cols-12 gap-4">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Marca</label>
                 <Combobox
                   placeholder="Selecione a marca"
@@ -298,7 +298,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Ano</label>
                 <input
                   type="number"
@@ -309,7 +309,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Modelo</label>
                 <Combobox
                   placeholder="Selecione o modelo"
@@ -320,7 +320,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Versão</label>
                 <Combobox
                   placeholder="Selecione a versão"
@@ -331,7 +331,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Cor</label>
                 <input
                   className={inputClass}
@@ -341,7 +341,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Quilometragem</label>
                 <input
                   type="text"
@@ -357,7 +357,7 @@ async function handleSubmit() {
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Câmbio</label>
                 <select
                   className={inputClass}
@@ -370,7 +370,7 @@ async function handleSubmit() {
                 </select>
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="xs:col-span-3">
                 <label className={labelClass}>Combustível</label>
                 <select
                   className={inputClass}

@@ -313,7 +313,7 @@ async function handleDelete() {
           <section className="border-t border-stone-100 pt-6">
             <h2 className="text-sm font-semibold text-stone-900 mb-4">Dados editáveis</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Quilometragem</label>
                 <input
